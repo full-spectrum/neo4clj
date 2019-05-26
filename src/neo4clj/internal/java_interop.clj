@@ -1,8 +1,8 @@
-(ns neo4clj.internal.neo4j
+(ns neo4clj.internal.java-interop
   (:require [neo4clj.internal.convert :as convert])
   (:import [org.neo4j.driver.internal.logging ConsoleLogging]
            [org.neo4j.driver.v1 AuthTokens Config Config$EncryptionLevel Driver
-                                GraphDatabase Session StatementRunner Transaction]
+                                GraphDatabase StatementRunner]
            [java.util Map]
            [java.util.logging Level]))
 
@@ -40,44 +40,6 @@
    (GraphDatabase/driver url (AuthTokens/basic usr pwd)))
   (^Driver [^String url ^String usr ^String pwd ^Config cfg]
    (GraphDatabase/driver url (AuthTokens/basic usr pwd) cfg)))
-
-(defn disconnect
-  "Close the given Neo4J connection"
-  [^Driver driver]
-  (.close driver))
-
-(defn create-session
-  "Create a new session on the given Neo4J connection"
-  ^Session [^Driver driver]
-  (.session driver))
-
-(defn begin-transaction
-  "Start a new transaction on the given Neo4J session"
-  ^Transaction [^Session session]
-  (.beginTransaction session))
-
-(defn commit-transaction
-  "Commits the given transaction"
-  [^Transaction trans]
-  (.success trans))
-
-(defn rollback-transaction
-  "Rolls the given transaction back"
-  [^Transaction trans]
-  (.failure trans))
-
-(defn- make-success-transaction [tx]
-  (proxy [org.neo4j.driver.v1.Transaction] []
-    (run
-      ([q] (.run tx q))
-      ([q p] (.run tx q p)))
-    (success [] (.success tx))
-    (failure [] (.failure tx))
-
-    ;; We only want to auto-success to ensure persistence
-    (close []
-      (.success tx)
-      (.close tx))))
 
 (defn execute
   "Runs the given query with optional parameters on the given Neo4J session/transaction"
