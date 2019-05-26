@@ -17,6 +17,10 @@
   "Sanitize a property key based on the Cypher style guide"
   (->camelCaseString key))
 
+(defn cypher-parameter-keys [params]
+  "Sanitize a parameter map based on the Neo4J driver requirements"
+  (transform-keys ->camelCaseString params))
+
 (defn cypher-relation-type [type]
   "Sanitize a relationship type based on the Cypher style guide"
   (->SCREAMING_SNAKE_CASE_STRING type))

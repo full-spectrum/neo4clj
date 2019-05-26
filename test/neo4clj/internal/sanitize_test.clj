@@ -32,6 +32,14 @@
       "lastAndMiddleName" :last-and-middle_name
       "lastAndMiddleName" "last_And-middle_Name")))
 
+(t/deftest cypher-parameter-keys
+  (t/testing "Sanitation of a map of parameters where keys are converted to match the CYPHER style guide"
+    (t/are [cypher-params params]
+        (= cypher-params (sut/cypher-parameter-keys params))
+      {"something" "test"} {:something "test"}
+      {"firstName" "Neo"} {:first-name "Neo"}
+      {"firstName" "Neo" "lastName" "Anderson"} {:first_name "Neo" :Last-Name "Anderson"})))
+
 (t/deftest cypher-relation-type
   (t/testing "Sanitation of a Clojure relation type to match the CYPHER style guide"
     (t/are [cypher type]
