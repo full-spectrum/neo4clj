@@ -66,6 +66,13 @@
   (str operation " INDEX ON " (sanitize/cypher-label label) "("
         (sanitize/cypher-property-key prop-key) ")"))
 
+(defn lookup-non-referred-node [node ref-id]
+  (when-not (:ref-id node)
+    (str (lookup-query
+          (assoc node :ref-id ref-id)
+          false)
+         " ")))
+
 (defn create-relationship-query
   "Returns the bolt query to create a one directional relationship
   based on the given relationship representation"
@@ -73,16 +80,8 @@
   (let [{:keys [ref-id from to type props]} (convert/clj-rel->neo4j rel)
         from-ref-id (or (:ref-id from) (generate-ref-id))
         to-ref-id (or (:ref-id to) (generate-ref-id))]
-    (str (when-not (:ref-id from)
-           (str (lookup-query
-                 (assoc from :ref-id from-ref-id)
-                 false)
-                " "))
-         (when-not (:ref-id to)
-           (str (lookup-query
-                 (assoc to :ref-id to-ref-id)
-                 false)
-                " "))
+    (str (lookup-non-referred-node from from-ref-id)
+         (lookup-non-referred-node to to-ref-id)
          "CREATE (" from-ref-id ")-[" ref-id ":" type " "
          (properties-query props) "]->(" to-ref-id ")"
          (when return? (str " RETURN " ref-id)))))
