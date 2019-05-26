@@ -80,7 +80,7 @@
 
 (defmulti neo4j->clj
   "Converts a Neo4J internal entity to a Clojure Hash-Map"
-  (fn [entity] (class entity)))
+  class)
 
 (defmethod neo4j->clj InternalNode
   [^InternalNode node]
@@ -97,9 +97,6 @@
   (->> (iterator-seq result)
        (map (fn [^Record r] (.asMap r)))
        (map #(reduce-kv (fn [m k v] (assoc m k (neo4j->clj v))) {} %))))
-
-#_(map #(reduce (fn [m [k v]] (assoc m k (neo4j->clj v))) {} %)
-       (map (fn [^Record r] (.asMap r)) (iterator-seq result)))
 
 (defn clj-value->neo4j-value
   "Convert a given clojure primitive into its bolt query equivalent"
