@@ -111,15 +111,13 @@ Create, read, update and delete relationships
 Create and read a complete graph
 Create and delete indexes
 
-## Supported Clojure Versions
 
-Neocons requires Clojure 1.8+.
+## Version matrix
 
-## Supported Neo4J Server Versions
+| Neo4clj  | Clojure | `neo-java-driver` | Neo4j Server |
+| -------- | ------- | ----------------- | ------------ |
+|   1.0.0  |  1.10.0 |             1.7.2 |        3.5.x |
 
-### Neocons 3.2
-
-Neo4clj `1.0` targets Neo4j Server 3.5.x  and includes Neo4j's Bolt Protocol.
 
 ## License
 
