@@ -1,4 +1,4 @@
-(defproject neo4clj "1.0.0-SNAPSHOT"
+(defproject fullspectrum/neo4clj "1.0.0-SNAPSHOT"
   :description "Clojure client for Neo4j"
   :dependencies [[camel-snake-kebab "0.4.0"]
                  [clojure.java-time "0.3.2"]

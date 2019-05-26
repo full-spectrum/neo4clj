@@ -1,5 +1,5 @@
-(ns full-spectrum.neo4clj.internal.neo4j
-  (:require [full-spectrum.neo4clj.internal.convert :as convert])
+(ns neo4clj.internal.neo4j
+  (:require [neo4clj.internal.convert :as convert])
   (:import [org.neo4j.driver.internal.logging ConsoleLogging]
            [org.neo4j.driver.v1 AuthTokens Config Config$EncryptionLevel Driver
                                 GraphDatabase Session StatementRunner Transaction]

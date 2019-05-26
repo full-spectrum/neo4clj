@@ -1,6 +1,6 @@
-(ns full-spectrum.neo4clj.internal.query-builder-test
+(ns neo4clj.internal.query-builder-test
   (:require [clojure.test :as t]
-            [full-spectrum.neo4clj.internal.query-builder :as sut]))
+            [neo4clj.internal.query-builder :as sut]))
 
 (t/deftest generate-ref-id
   (t/testing "Generate a unique reference id"

@@ -1,7 +1,6 @@
-(ns full-spectrum.neo4clj.internal.sanitize-test
+(ns neo4clj.internal.sanitize-test
   (:require [clojure.test :as t]
-            [full-spectrum.neo4clj.internal.sanitize :as sut]))
-
+            [neo4clj.internal.sanitize :as sut]))
 
 (t/deftest cypher-label
   (t/testing "Sanitation of a Clojure label to match the CYPHER style guide"
