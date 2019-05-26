@@ -1,6 +1,6 @@
 (ns full-spectrum.neo4clj.internal.query-builder
   (:require [clojure.string :as str]
-            [full-spectrum.neo4clj.internal.neo4j :as neo4j]
+            [full-spectrum.neo4clj.internal.convert :as convert]
             [full-spectrum.neo4clj.internal.sanitize :as sanitize]))
 
 (defn generate-ref-id
@@ -18,7 +18,7 @@
 (defn create-node-query
   "Returns the bolt query to create a node based on the given node representation"
   [node return?]
-  (let [{:keys [ref-id labels props]} (neo4j/clj-node->neo4j node)]
+  (let [{:keys [ref-id labels props]} (convert/clj-node->neo4j node)]
     (str "CREATE (" ref-id
          (when (not-empty labels)
            (str ":" (str/join ":" labels)))
@@ -33,7 +33,7 @@
 (defmethod where-query clojure.lang.APersistentMap
   [ref-id criterias]
   (->>
-   (neo4j/hash-map->properties criterias)
+   (convert/hash-map->properties criterias)
    (map (fn [[k v]] (str ref-id "." k " = " v)))
    (str/join " AND ")))
 
@@ -56,7 +56,7 @@
          (str ") WHERE ID(" ref-id ") = " id)
          (str ":" (str/join ":" (sanitize/cypher-labels labels))
               (if (map? props)
-                (str " " (properties-query (neo4j/hash-map->properties props)) ")")
+                (str " " (properties-query (convert/hash-map->properties props)) ")")
                 (str ") WHERE " (where-query ref-id props)))))
        (when return? (str " RETURN " ref-id))))
 
@@ -70,7 +70,7 @@
   "Returns the bolt query to create a one directional relationship
   based on the given relationship representation"
   [rel return?]
-  (let [{:keys [ref-id from to type props]} (neo4j/clj-rel->neo4j rel)
+  (let [{:keys [ref-id from to type props]} (convert/clj-rel->neo4j rel)
         from-ref-id (or (:ref-id from) (generate-ref-id))
         to-ref-id (or (:ref-id to) (generate-ref-id))]
     (str (when-not (:ref-id from)
@@ -113,7 +113,7 @@
   Allowed operations are: =, +="
   [operation {:keys [ref-id] :as neo4j-entity} props]
   (str (lookup-query neo4j-entity false) " SET "
-       ref-id " " operation " " (properties-query (neo4j/hash-map->properties props))))
+       ref-id " " operation " " (properties-query (convert/hash-map->properties props))))
 
 (defn delete-query
   "Takes a neo4j entity representation and deletes it"
