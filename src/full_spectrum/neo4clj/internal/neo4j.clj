@@ -12,25 +12,27 @@
            [java.util Map]
            [java.util.logging Level]))
 
+(def log-level-mapping
+  "Convenience for allowing to use Clojure keywords to describe Neo4J log level."
+  {:all   Level/ALL
+   :error Level/SEVERE
+   :warn  Level/WARNING
+   :info  Level/INFO
+   :off   Level/OFF})
+
 (defn build-config
   "Generates a new Neo4J Config object based on the given options
 
   Supports the current options:
-  :logging :level [:all :error :warning :info :off] - defaults to :warning
-  :encryption [:required :off] - defaults to :required"
+  :log :level [:all :error :warn :info :off] - defaults to :warn
+  :encryption [:required :none] - defaults to :required"
   ^Config [opts]
-  (let [logging-level (ConsoleLogging. (condp = (get-in [:logging :level] opts)
-                                         :all     Level/ALL
-                                         :error   Level/SEVERE
-                                         :warning Level/WARNING
-                                         :info    Level/INFO
-                                         :off    Level/OFF
-                                         Level/WARNING))
-        encryption-level (if (= (:encryption opts) :off)
-                           (. Config$EncryptionLevel NONE)
-                           (. Config$EncryptionLevel REQUIRED))]
+  (let [log-level (get-in opts [:log :level] :warn)
+        encryption-level (if (= (:encryption opts) :none)
+                           Config$EncryptionLevel/NONE
+                           Config$EncryptionLevel/REQUIRED)]
     (.. (Config/build)
-        (withLogging logging-level)
+        (withLogging (ConsoleLogging. (get log-level-mapping log-level)))
         (withEncryptionLevel encryption-level)
         toConfig)))
 
