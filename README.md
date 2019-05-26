@@ -125,6 +125,14 @@ Create and delete indexes
 |   1.0.0  |  1.10.0 |             1.7.2 |        3.5.x |
 
 
+## Acknowledgements
+
+This project has been inspired by the work of two other projects listed below.
+
+Neocons by Michael Klishin (https://github.com/michaelklishin/neocons)
+neo4j-clj by Christian Betz (https://github.com/gorillalabs/neo4j-clj)
+
+
 ## License
 
 Copyright (C) 2019 Claus Engel-Christensen, Jacob Emcken, and the Full Spectrum team.
