@@ -89,12 +89,16 @@
 
 (defn add-labels!
   "Takes a collection of labels and adds them to the found neo4j entities"
-  [^StatementRunner conn ^clojure.lang.APersistentMap neo4j-entity ^clojure.lang.APersistentVector labels]
+  [^StatementRunner conn
+   ^clojure.lang.APersistentMap neo4j-entity
+   ^clojure.lang.APersistentVector labels]
   (execute! conn (builder/modify-labels-query "SET" neo4j-entity labels)))
 
 (defn remove-labels!
   "Takes a collection of labels and removes them from found neo4j objects"
-  [^StatementRunner conn ^clojure.lang.APersistentMap neo4j-entity ^clojure.lang.APersistentVector labels]
+  [^StatementRunner conn
+   ^clojure.lang.APersistentMap neo4j-entity
+   ^clojure.lang.APersistentVector labels]
   (execute! conn (builder/modify-labels-query "REMOVE" neo4j-entity labels)))
 
 (defn update-properties!
@@ -104,12 +108,16 @@
   Keys only existing in the given property map is added to the object
   Keys only existing on the found object is kept as is
   Keys found in both are updated with values from the given property map"
-  [^StatementRunner conn ^clojure.lang.APersistentMap neo4j-entity ^clojure.lang.APersistentMap props]
+  [^StatementRunner conn
+   ^clojure.lang.APersistentMap neo4j-entity
+   ^clojure.lang.APersistentMap props]
   (execute! conn (builder/modify-properties-query "+=" neo4j-entity props)))
 
 (defn replace-properties!
   "Takes a property map and replaces the properties on all found neo4j objects with it"
-  [^StatementRunner conn ^clojure.lang.APersistentMap neo4j-entity ^clojure.lang.APersistentMap props]
+  [^StatementRunner conn
+   ^clojure.lang.APersistentMap neo4j-entity
+   ^clojure.lang.APersistentMap props]
   (execute! conn (builder/modify-properties-query "=" neo4j-entity props)))
 
 (defn delete!
