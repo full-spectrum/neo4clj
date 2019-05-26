@@ -1,10 +1,13 @@
-# Neo4clj, a Clojure client for the Neo4J
+# Neo4J Clojure client
 
-Neo4clj is a idomatic clojure client.
+Neo4clj is a idomatic clojure client, exclusivly using [Bolt][] for performance.
+
+[Bolt]: https://boltprotocol.org
+
 
 # Getting started
 
-~~~
+~~~clojure
 (require '[full-spectrum.neo4clj.client :as client])
 
 ;; Create a connection to the Neo4j server
@@ -16,9 +19,9 @@ Neo4clj is a idomatic clojure client.
 ;; Create a new node on the connected server and return it
 (client/create-node
   connection
-  {:reference-id "N"
+  {:ref-id "N"
    :labels [:person]
-   :properties {:first-name "Tim"
+   :properties {:first-name "Thomas"
                 :last-name "Anderson"}})
 
 ;; Close the connection to the Neo4J server
@@ -29,65 +32,68 @@ Neo4clj is a idomatic clojure client.
 
 ## Node
 
-~~~~
+~~~clojure
 {:id       34                            ;; The id from Neo4J, this is only set if object is fetched from Neo4J
- :ref-id   "G_123"                       ;; The variable name used for this entity in bolt queries
+ :ref-id   "G__123"                      ;; The variable name used for this entity in bolt queries
  :labels   [:example-node :first-level]  ;; Collection of labels to associated with the entity
  :props    {:property-1 123              ;; Map of properties on the node. Nesting is not supported
             :property-2 "something"}}
-~~~~
+~~~
+
 
 ## Relationship
 
-~~~~
-{:id        12                            ;; The id from Neo4J, this is only set if object is fetched from Neo4J
- :ref-id    "G_321"                       ;; The variable name used for this entity in bolt queries
- :type      :example-relationship         ;; The type of the relationship
- :from      Node                          ;; The node representation of the start of the relationship
- :to        Node                          ;; The node representation of the end of the relationship
- :props     {:property-1 123              ;; Map of properties on the relationship. Nesting is not supported
-             :property-2 "something"}}
-~~~~
+~~~clojure
+{:id       12                            ;; The id from Neo4J, this is only set if object is fetched from Neo4J
+ :ref-id   "G__321"                      ;; The variable name used for this entity in bolt queries
+ :type     :example-relationship         ;; The type of the relationship
+ :from     Node                          ;; The node representation of the start of the relationship
+ :to       Node                          ;; The node representation of the end of the relationship
+ :props    {:property-1 123              ;; Map of properties on the relationship. Nesting is not supported
+            :property-2 "something"}}
+~~~
+
 
 ## Lookup
 
 ### By id
 
-~~~~
-{:ref-id    "G312"                        ;; The variable name used for this entity in bolt queries
- :id        12}                           ;; The id to lookup the entity in Neo4J
-~~~~
+~~~clojure
+{:ref-id   "G__312"                      ;; The variable name used for this entity in bolt queries
+ :id       12}                           ;; The id to lookup the entity in Neo4J
+~~~
 
 ### By labels and properties
 
 #### By labels and specific property map
 
-~~~~
-{:ref-id   "G_312"                       ;; The variable name used for this entity in bolt queries
+~~~clojure
+{:ref-id   "G__312"                      ;; The variable name used for this entity in bolt queries
  :labels   [:example-node :first-level]  ;; Collection of labels required to be a match
  :props    {:property-1 123              ;; Map of properties required to be a match
             :property-2 "something"}}
-~~~~
+~~~
 
 #### By labels and one of multiple property maps
 
-~~~~
-{:ref-id   "G_312"                       ;; The variable name used for this entity in bolt queries
+~~~clojure
+{:ref-id   "G__312"                      ;; The variable name used for this entity in bolt queries
  :labels   [:example-node :first-level]  ;; Collection of labels required to be a match
  :props    [{:property-1 123             ;; Collection of property maps, where one is required to be a match
              :property-2 "something"}
              {:property-1 321
               :property-2 "something else"}]}
-~~~~
+~~~
 
 ## Graph
 
-~~~~
-{:lookups         [Lookup]                    ;; Collection of Lookup representations
- :nodes           [Node]                      ;; Collection of Node representations
- :relationships   [Relationship]              ;; Collection of Relationship representations
- :return-aliases  ["G_123" "G_321"]           ;; Collection of reference-ids to return
-~~~~
+~~~clojure
+{:lookups         [Lookup]               ;; Collection of Lookup representations
+ :nodes           [Node]                 ;; Collection of Node representations
+ :relationships   [Relationship]         ;; Collection of Relationship representations
+ :return-aliases  ["G__123" "G__321"]    ;; Collection of reference-ids to return
+~~~
+
 
 # Supported Features
 
@@ -117,6 +123,6 @@ Neo4clj `1.0` targets Neo4j Server 3.5.x  and includes Neo4j's Bolt Protocol.
 
 ## License
 
-Copyright (C) 2019 Claus Engel-Christensen, Jacob Emcken, and the Full Spectrum IVS team.
+Copyright (C) 2019 Claus Engel-Christensen, Jacob Emcken, and the Full Spectrum team.
 
 Licensed under the [Eclipse Public License](http://www.eclipse.org/legal/epl-v10.html)
