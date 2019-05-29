@@ -69,7 +69,7 @@
       [:car] ["Car"]
       [:car :best-friend :next-best-friend] ["Car" "BestFriend" "NextBestFriend"])))
 
-(t/deftest clj-lproperties
+(t/deftest clj-properties
   (t/testing "Sanitation of a map of CYPHER properties to match the Clojure style guide"
     (t/are [properties cypher]
         (= properties (sut/clj-properties cypher))
@@ -77,3 +77,11 @@
       {:first-name "Sue"} {"firstName" "Sue"}
       {:middle-and-last-name "Joel Anderson"} {"middleAndLastName" "Joel Anderson"}
       {:first-name "Jane" :last-name "Doe" :age 32} {"firstName" "Jane" "lastName" "Doe" "age" 32})))
+
+(t/deftest clj-relation-type
+  (t/testing "Sanitation of a CYPHER relationship type to match the Clojure style guide"
+    (t/are [rel-type cypher]
+        (= rel-type (sut/clj-relation-type cypher))
+      :car "CAR"
+      :best-friend "BEST_FRIEND"
+      :next-best-friend "NEXT_BEST_FRIEND")))

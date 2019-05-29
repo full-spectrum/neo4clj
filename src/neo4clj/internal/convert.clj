@@ -12,18 +12,17 @@
 ;; Pattern used to recognize date-time values from Neo4J
 (def date-time-pattern #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}")
 
-(defn- property->value
+(defn property->value
   "Convert a given bolt property into its clojure equivalent"
   [prop]
-  (if (re-find date-time-pattern prop)
+  (if (and (string? prop) (re-find date-time-pattern prop))
     (t/instant prop)
     prop))
 
-(defn- neo4j-entity-basics->clj
+(defn neo4j-entity-basics->clj
   "Convert a given Neo4J internal object into a hash-map with the basic entity informations"
   [^InternalEntity entity]
   (hash-map :id (.id entity)
-            :labels (sanitize/clj-labels (.labels entity))
             :props (sanitize/clj-properties
                     (specter/transform
                      [MAP-VALS]
@@ -36,11 +35,13 @@
 
 (defmethod neo4j->clj InternalNode
   [^InternalNode node]
-  (neo4j-entity-basics->clj node))
+  (assoc (neo4j-entity-basics->clj node)
+         :labels (sanitize/clj-labels (.labels node))))
 
 (defmethod neo4j->clj InternalRelationship
   [^InternalRelationship rel]
   (assoc (neo4j-entity-basics->clj rel)
+         :type (sanitize/clj-relation-type (.type rel))
          :start-id (.startNodeId rel)
          :end-id (.endNodeId rel)))
 
@@ -48,7 +49,7 @@
   [^InternalStatementResult result]
   (->> (iterator-seq result)
        (map (fn [^Record r] (.asMap r)))
-       (map #(reduce-kv (fn [m k v] (assoc m k (neo4j->clj v))) {} %))))
+       (map #(reduce (fn [m [k v]] (assoc m k (neo4j->clj v))) {} %))))
 
 (defn clj-value->neo4j-value
   "Convert a given clojure primitive into its bolt query equivalent"
@@ -65,7 +66,8 @@
 (defn hash-map->properties
   "Convert a maps keys and values into its bolt equivalent"
   [m]
-  (reduce-kv (fn [m k v] (assoc m (sanitize/cypher-property-key k) (clj-value->neo4j-value v))) {} m))
+  (when m
+    (reduce-kv (fn [m k v] (assoc m (sanitize/cypher-property-key k) (clj-value->neo4j-value v))) {} m)))
 
 (defn clj-node->neo4j
   "Convert a Clojure Hash-Map representation to a bolt node based on the Cypher style guide"

@@ -11,16 +11,9 @@
   (t/testing "Cypher representation of property map"
     (t/are [cypher props]
         (= cypher (sut/properties-query props))
+      nil nil
       "{}" {}
       "{a: 1, b: 'test', c: TRUE}" {"a" 1 "b" "'test'" "c" "TRUE"})))
-
-(t/deftest create-node-query
-  (t/testing "Cypher for creating a node with/without return"
-    (let [node {:ref-id "G__123" :labels [:label1] :props {:a "1"}}]
-      (t/are [query return?]
-          (= query (sut/create-node-query node return?))
-        "CREATE (G__123:Label1 {a: '1'})" false
-        "CREATE (G__123:Label1 {a: '1'}) RETURN G__123" true))))
 
 (t/deftest where-query
   (t/testing "Cypher for where parts based on properties"
@@ -30,8 +23,8 @@
           cypher-multi-keys (str "G__42.code = '+45' AND G__42.number = '12345678'"
                                  " OR "
                                  "G__42.code = '+18' AND G__42.number = '87654321'")]
-      (t/are [expected-cypher props]
-          (= expected-cypher (sut/where-query "G__42" props))
+      (t/are [cypher props]
+          (= cypher (sut/where-query "G__42" props))
         "G__42.number = '12345678'" {:number "12345678"}
         "G__42.code = '+45' AND G__42.number = '12345678'" {:code "+45" :number "12345678"}
         cypher-single-key (set single-key-props-coll)
@@ -40,6 +33,40 @@
         cypher-multi-keys multi-key-props-coll
         cypher-single-key (apply list single-key-props-coll)
         cypher-multi-keys (apply list multi-key-props-coll)))))
+
+(t/deftest node-representation
+  (t/testing "Cypher representation of a node including where parts"
+    (t/are [cypher-parts node]
+        (= cypher-parts (sut/node-representation node))
+      ["(n)" nil] {:ref-id "n"}
+      ["(p:Person)" nil] {:ref-id "p" :labels [:person]}
+      ["(c:Person:Customer)" nil] {:ref-id "c" :labels [:person :customer]}
+      ["(c:Person:Customer {firstName: 'Neo', lastName: 'Anderson'})" nil] {:ref-id "c"
+                                                                                :labels [:person :customer]
+                                                                                :props {:first-name "Neo"
+                                                                                        :last_name "Anderson"}}
+      ["(c:Person:Customer)" "c.firstName = 'Neo' OR c.lastName = 'Anderson'"] {:ref-id "c"
+                                                                                :labels [:person :customer]
+                                                                                :props [{:first-name "Neo"}
+                                                                                        {:last_name "Anderson"}]}
+      ["(c)" "ID(c) = 12"] {:ref-id "c" :labels [:person :customer] :id 12})))
+
+(t/deftest create-node-query
+  (t/testing "Cypher for creating a node with/without return"
+    (let [basic-node {:ref-id "G__123"}
+          node-labels (assoc basic-node :labels [:label1])
+          node-props (assoc basic-node :props {:a "1"})
+          node-complete (merge node-labels node-props)]
+      (t/are [query node return?]
+          (= query (sut/create-node-query node return?))
+        "CREATE (G__123)" basic-node false
+        "CREATE (G__123) RETURN G__123" basic-node true
+        "CREATE (G__123:Label1)" node-labels false
+        "CREATE (G__123:Label1) RETURN G__123" node-labels true
+        "CREATE (G__123 {a: '1'})" node-props false
+        "CREATE (G__123 {a: '1'}) RETURN G__123" node-props true
+        "CREATE (G__123:Label1 {a: '1'})" node-complete false
+        "CREATE (G__123:Label1 {a: '1'}) RETURN G__123" node-complete true))))
 
 (t/deftest lookup-query
   (t/testing "Cypher for lookup query"
@@ -63,6 +90,26 @@
           (= (str operation expected-cypher) (sut/index-query operation :phone :number))
         "CREATE"
         "DROP"))))
+
+(t/deftest lookup-non-referred-node
+  (t/testing "Cypher to lookup a node if it isn't allready reffered"
+    (t/are [cypher node]
+        (= cypher (sut/lookup-non-referred-node "n" node))
+      nil {:ref-id "G__123"}
+      "MATCH (n) " {}
+      "MATCH (n:Person) " {:labels [:person]}
+      "MATCH (n) WHERE ID(n) = 12 " {:id 12})))
+
+(t/deftest relationship-representation
+  (t/testing "Cypher representation of a relationship"
+    (t/are [cypher rel]
+        (= cypher (sut/relationship-representation "(p:Person)" "(c:Company)" rel))
+      "(p:Person)-[]->(c:Company)" {}
+      "(p:Person)-[r]->(c:Company)" {:ref-id "r"}
+      "(p:Person)-[:EMPLOYEE]->(c:Company)" {:type :employee}
+      "(p:Person)-[r:FORMER_EMPLOYEE]->(c:Company)" {:ref-id "r" :type :former-employee}
+      "(p:Person)-[r {hiredAt: 2008}]->(c:Company)" {:ref-id "r" :props {:hired-at 2008}}
+      "(p:Person)-[r:EMPLOYEE {hiredAt: 2008}]->(c:Company)" {:ref-id "r" :type :employee :props {:hired-at 2008}})))
 
 (t/deftest create-relationship-query
   (let [next-gensym (atom 0)]

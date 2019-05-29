@@ -13,18 +13,8 @@
 (defn properties-query
   "Convert a map into its bolt query equivalent"
   [m]
-  (str "{" (str/join ", " (map (fn [[k v]] (str k ": " v)) m)) "}"))
-
-(defn create-node-query
-  "Returns the bolt query to create a node based on the given node representation"
-  [node return?]
-  (let [{:keys [ref-id labels props]} (convert/clj-node->neo4j node)]
-    (str "CREATE (" ref-id
-         (when (not-empty labels)
-           (str ":" (str/join ":" labels)))
-         " "
-         (properties-query props) ")"
-         (when return? (str " RETURN " ref-id)))))
+  (when (map? m)
+    (str "{" (str/join ", " (map (fn [[k v]] (str k ": " v)) m)) "}")))
 
 (defmulti where-query
   "Returns the bolt query where representation based on the given criterias"
@@ -45,20 +35,46 @@
   [ref-id criterias]
   (where-query ref-id (set criterias)))
 
+(defmethod where-query nil
+  [ref-id criterias]
+  "")
+
+(defn node-representation
+  "Takes a node representation and returns its cypher equivalent
+
+  The return value is an vector with the first part being the actual node
+  and the second the where clause for the node lookup"
+  [{:keys [id ref-id labels props]}]
+  (if id
+    [(str "(" ref-id ")")
+     (str "ID(" ref-id ") = " id)]
+    [(str "(" ref-id
+          (when (not-empty labels)
+            (str ":" (str/join ":" (sanitize/cypher-labels labels))))
+          (when (map? props)
+            (str " " (properties-query (convert/hash-map->properties props))))
+          ")")
+     (when (and props (not (map? props))) (where-query ref-id props))]))
+
+(defn create-node-query
+  "Returns the bolt query to create a node based on the given node representation"
+  [{:keys [ref-id] :as node} return?]
+  (str "CREATE "
+       (first (node-representation node))
+       (when return? (str " RETURN " ref-id))))
+
 (defn lookup-query
   "Takes a lookup representation and generates a bolt query
 
   A lookup representation needs the :reference.id to be set and
   either the :id or :labels and :properties keys"
-  [{:keys [id ref-id labels props]} return?]
-  (str "MATCH (" ref-id
-       (if id
-         (str ") WHERE ID(" ref-id ") = " id)
-         (str ":" (str/join ":" (sanitize/cypher-labels labels))
-              (if (map? props)
-                (str " " (properties-query (convert/hash-map->properties props)) ")")
-                (str ") WHERE " (where-query ref-id props)))))
-       (when return? (str " RETURN " ref-id))))
+  [{:keys [ref-id] :as node} return?]
+  (let [cypher-node (node-representation node)]
+    (str "MATCH "
+         (str (first cypher-node)
+              (when (second cypher-node)
+                (str " WHERE " (second cypher-node))))
+         (when return? (str " RETURN " ref-id)))))
 
 (defn index-query
   "Creates a query to modify index, allowed operations are: CREATE, DROP"
@@ -66,36 +82,47 @@
   (str operation " INDEX ON " (sanitize/cypher-label label) "("
         (sanitize/cypher-property-key prop-key) ")"))
 
-(defn lookup-non-referred-node [node ref-id]
+(defn lookup-non-referred-node [ref-id node]
+  "Creates a query to lookup a node without a ref-id and refers it as given ref-id"
   (when-not (:ref-id node)
     (str (lookup-query
           (assoc node :ref-id ref-id)
           false)
          " ")))
 
+(defn relationship-representation
+  "Takes a relationship representation and returns its cypher equivalent"
+  [from-cypher to-cypher {:keys [ref-id type props]}]
+  (str from-cypher "-[" ref-id
+       (when type (str ":" (sanitize/cypher-relation-type type)))
+       (when (map? props) (str " " (properties-query (convert/hash-map->properties props))))
+       "]->" to-cypher))
+
 (defn create-relationship-query
   "Returns the bolt query to create a one directional relationship
   based on the given relationship representation"
-  [rel return?]
-  (let [{:keys [ref-id from to type props]} (convert/clj-rel->neo4j rel)
-        from-ref-id (or (:ref-id from) (generate-ref-id))
+  [{:keys [ref-id from to] :as rel} return?]
+  (let [from-ref-id (or (:ref-id from) (generate-ref-id))
         to-ref-id (or (:ref-id to) (generate-ref-id))]
-    (str (lookup-non-referred-node from from-ref-id)
-         (lookup-non-referred-node to to-ref-id)
-         "CREATE (" from-ref-id ")-[" ref-id ":" type " "
-         (properties-query props) "]->(" to-ref-id ")"
+    (str (lookup-non-referred-node from-ref-id from)
+         (lookup-non-referred-node to-ref-id to)
+         "CREATE "
+         (relationship-representation (str "(" from-ref-id ")")
+                                      (str "(" to-ref-id ")")
+                                      rel)
          (when return? (str " RETURN " ref-id)))))
 
 (defn create-graph-query
   "Takes a graph representation and creates the nodes and relationship defined
   and returns any aliases specified in the representation"
-  [{:keys [lookups nodes relationships return-aliases]}]
+  [{:keys [lookups nodes relationships returns]}]
   (str/join " " (concat
                  (map #(lookup-query % false) lookups)
                  (map #(create-node-query % false) nodes)
                  (map #(create-relationship-query % false) relationships)
-                 (when-not (empty? return-aliases)
-                   (vector (str "RETURN " (str/join "," return-aliases)))))))
+                 (when-not (empty? returns)
+                   (vector (str "RETURN " (str/join "," returns)))))))
+
 
 (defn modify-labels-query
   "Takes a operation and a neo4j object representation, along with a collection

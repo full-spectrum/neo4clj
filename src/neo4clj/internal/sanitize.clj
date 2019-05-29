@@ -23,7 +23,8 @@
 
 (defn cypher-relation-type [type]
   "Sanitize a relationship type based on the Cypher style guide"
-  (->SCREAMING_SNAKE_CASE_STRING type))
+  (when type
+    (->SCREAMING_SNAKE_CASE_STRING type)))
 
 (defn clj-label [label]
   "Sanitize a node label based on the Clojure style guide"
@@ -35,3 +36,7 @@
 
 (defn clj-properties [props]
   (transform-keys ->kebab-case-keyword props))
+
+(defn clj-relation-type [type]
+  "Sanitize a relationship type based on the Clojure style guide"
+  (->kebab-case-keyword type))
