@@ -3,11 +3,11 @@
             [com.rpl.specter :as specter :refer [MAP-VALS]]
             [neo4clj.internal.sanitize :as sanitize]
             [java-time :as t])
-  (:import [org.neo4j.driver.internal InternalEntity
-                                      InternalNode
-                                      InternalRelationship
-                                      InternalStatementResult]
-           [org.neo4j.driver.v1 Record]))
+  (:import [org.neo4j.driver.v1.types Entity
+                                      Node
+                                      Relationship]
+           [org.neo4j.driver.v1 Record
+                                StatementResult]))
 
 ;; Pattern used to recognize date-time values from Neo4J
 (def date-time-pattern #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}")
@@ -21,7 +21,7 @@
 
 (defn neo4j-entity-basics->clj
   "Convert a given Neo4J internal object into a hash-map with the basic entity informations"
-  [^InternalEntity entity]
+  [^Entity entity]
   (hash-map :id (.id entity)
             :props (sanitize/clj-properties
                     (specter/transform
@@ -33,20 +33,20 @@
   "Converts a Neo4J internal entity to a Clojure Hash-Map"
   class)
 
-(defmethod neo4j->clj InternalNode
-  [^InternalNode node]
+(defmethod neo4j->clj Node
+  [^Node node]
   (assoc (neo4j-entity-basics->clj node)
          :labels (sanitize/clj-labels (.labels node))))
 
-(defmethod neo4j->clj InternalRelationship
-  [^InternalRelationship rel]
+(defmethod neo4j->clj Relationship
+  [^Relationship rel]
   (assoc (neo4j-entity-basics->clj rel)
          :type (sanitize/clj-relation-type (.type rel))
          :start-id (.startNodeId rel)
          :end-id (.endNodeId rel)))
 
-(defmethod neo4j->clj InternalStatementResult
-  [^InternalStatementResult result]
+(defmethod neo4j->clj StatementResult
+  [^StatementResult result]
   (->> (iterator-seq result)
        (map (fn [^Record r] (.asMap r)))
        (map #(reduce (fn [m [k v]] (assoc m k (neo4j->clj v))) {} %))))
