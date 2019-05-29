@@ -1,7 +1,7 @@
-(ns neo4clj.internal.convert-test
+(ns neo4clj.convert-test
   (:require [clojure.test :as t]
             [java-time :as time]
-            [neo4clj.internal.convert :as sut]))
+            [neo4clj.convert :as sut]))
 
 (def neo4j-node
   "Mock object to represent a Neo4J Node"

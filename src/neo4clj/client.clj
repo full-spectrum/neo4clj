@@ -1,7 +1,7 @@
 (ns neo4clj.client
   (:require [clojure.string :as str]
-            [neo4clj.internal.java-interop :as java-interop]
-            [neo4clj.internal.query-builder :as builder])
+            [neo4clj.java-interop :as java-interop]
+            [neo4clj.query-builder :as builder])
   (:import  [org.neo4j.driver.v1 Driver Session StatementRunner Transaction]))
 
 (defn connect

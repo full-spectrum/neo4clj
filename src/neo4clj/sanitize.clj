@@ -1,4 +1,4 @@
-(ns neo4clj.internal.sanitize
+(ns neo4clj.sanitize
   (:require [camel-snake-kebab.core :refer [->camelCaseString
                                             ->PascalCaseString
                                             ->SCREAMING_SNAKE_CASE_STRING

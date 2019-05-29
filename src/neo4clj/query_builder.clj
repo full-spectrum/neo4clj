@@ -1,7 +1,7 @@
-(ns neo4clj.internal.query-builder
+(ns neo4clj.query-builder
   (:require [clojure.string :as str]
-            [neo4clj.internal.convert :as convert]
-            [neo4clj.internal.sanitize :as sanitize]))
+            [neo4clj.convert :as convert]
+            [neo4clj.sanitize :as sanitize]))
 
 (defn generate-ref-id
   "Generate a unique id that can be used to reference an Neo4j entity

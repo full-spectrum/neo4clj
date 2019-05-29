@@ -1,5 +1,5 @@
-(ns neo4clj.internal.java-interop
-  (:require [neo4clj.internal.convert :as convert])
+(ns neo4clj.java-interop
+  (:require [neo4clj.convert :as convert])
   (:import [org.neo4j.driver.internal.logging ConsoleLogging]
            [org.neo4j.driver.v1 AuthTokens Config Config$EncryptionLevel Driver
                                 GraphDatabase StatementRunner]

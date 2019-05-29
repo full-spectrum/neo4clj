@@ -1,7 +1,7 @@
-(ns neo4clj.internal.convert
+(ns neo4clj.convert
   (:require [clojure.string :as str]
             [com.rpl.specter :as specter :refer [MAP-VALS]]
-            [neo4clj.internal.sanitize :as sanitize]
+            [neo4clj.sanitize :as sanitize]
             [java-time :as t])
   (:import [org.neo4j.driver.v1.types Entity
                                       Node
