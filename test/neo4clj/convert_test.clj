@@ -84,10 +84,10 @@
       {"age" 46} {:age 46}
       {"firstName" "'Neo'" "lastName" "'Anderson'"} {:first-name "Neo" :last_name "Anderson"})))
 
-(t/deftest clj-rel->neo4j
+(t/deftest clj-relationship->neo4j
   (t/testing "Convert a Clojure relationship to a sanitized Neo4j relationship representation"
     (t/are [neo4j-rel clj-rel]
-        (= neo4j-rel (sut/clj-rel->neo4j clj-rel))
+        (= neo4j-rel (sut/clj-relationship->neo4j clj-rel))
       {:ref-id "r" :type nil :from {:ref-id "p"} :to {:ref-id "c"} :props nil} {:ref-id "r" :from {:ref-id "p"} :to {:ref-id "c"}}
       {:ref-id "r" :type "EMPLOYEE" :from {:ref-id "p"} :to {:ref-id "c"} :props nil} {:ref-id "r" :type :employee :from {:ref-id "p"} :to {:ref-id "c"}}
       {:ref-id "r" :id 4 :type "EMPLOYEE" :from {:ref-id "p"} :to {:ref-id "c"} :props {"hiredAt" 2008 "position" "'Technician'"}} {:ref-id "r"  :id 4 :type :employee :from {:ref-id "p"} :to {:ref-id "c"} :props {:hired-at 2008 :position "Technician"}})))

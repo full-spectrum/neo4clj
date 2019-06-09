@@ -69,9 +69,9 @@
   (when m
     (reduce-kv (fn [m k v] (assoc m (sanitize/cypher-property-key k) (clj-value->neo4j-value v))) {} m)))
 
-(defn clj-rel->neo4j
+(defn clj-relationship->neo4j
   "Convert a Clojure Hash-Map representation to a bolt relationship based on the Cypher style guide"
-  [rel]
+  [^clojure.lang.IPersistentMap rel]
   (-> rel
       (update :type sanitize/cypher-relation-type)
       (update :props hash-map->properties)))
