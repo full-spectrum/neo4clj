@@ -14,13 +14,11 @@ Add the following dependency to `project.clj`:
 # Getting started
 
 ~~~clojure
-(require '[full-spectrum.neo4clj.client :as client])
+(require '[neo4clj.client :as client])
 
 ;; Create a connection to the Neo4j server
 (def connection
-  (client/connect {:url "bolt://localhost:7687"
-                   :username "neo4j"
-                   :password "password"}))
+  (client/connect "bolt://localhost:7687" "neo4j" "password"))
 
 ;; Create a new node on the connected server and return it
 (client/create-node
@@ -36,70 +34,12 @@ Add the following dependency to `project.clj`:
 
 # Clojure representations
 
-## Node
+Neo4clj uses Clojure maps to represent Nodes and Relationships.
+To learn more please see [Clojure Representations](docs/representations.md)
 
-~~~clojure
-{:id       34                            ;; The id from Neo4J, this is only set if object is fetched from Neo4J
- :ref-id   "G__123"                      ;; The variable name used for this entity in bolt queries
- :labels   [:example-node :first-level]  ;; Collection of labels to associated with the entity
- :props    {:property-1 123              ;; Map of properties on the node. Nesting is not supported
-            :property-2 "something"}}
-~~~
+# Examples
 
-
-## Relationship
-
-~~~clojure
-{:id       12                            ;; The id from Neo4J, this is only set if object is fetched from Neo4J
- :ref-id   "G__321"                      ;; The variable name used for this entity in bolt queries
- :type     :example-relationship         ;; The type of the relationship
- :from     Node                          ;; The node representation of the start of the relationship
- :to       Node                          ;; The node representation of the end of the relationship
- :props    {:property-1 123              ;; Map of properties on the relationship. Nesting is not supported
-            :property-2 "something"}}
-~~~
-
-
-## Lookup
-
-### By id
-
-~~~clojure
-{:ref-id   "G__312"                      ;; The variable name used for this entity in bolt queries
- :id       12}                           ;; The id to lookup the entity in Neo4J
-~~~
-
-### By labels and properties
-
-#### By labels and specific property map
-
-~~~clojure
-{:ref-id   "G__312"                      ;; The variable name used for this entity in bolt queries
- :labels   [:example-node :first-level]  ;; Collection of labels required to be a match
- :props    {:property-1 123              ;; Map of properties required to be a match
-            :property-2 "something"}}
-~~~
-
-#### By labels and one of multiple property maps
-
-~~~clojure
-{:ref-id   "G__312"                      ;; The variable name used for this entity in bolt queries
- :labels   [:example-node :first-level]  ;; Collection of labels required to be a match
- :props    [{:property-1 123             ;; Collection of property maps, where one is required to be a match
-             :property-2 "something"}
-             {:property-1 321
-              :property-2 "something else"}]}
-~~~
-
-## Graph
-
-~~~clojure
-{:lookups         [Lookup]               ;; Collection of Lookup representations
- :nodes           [Node]                 ;; Collection of Node representations
- :relationships   [Relationship]         ;; Collection of Relationship representations
- :return-aliases  ["G__123" "G__321"]    ;; Collection of reference-ids to return
-~~~
-
+To learn more about how to use Neo4clj please take a look at our [examples](docs/examples.md)
 
 # Supported Features
 
