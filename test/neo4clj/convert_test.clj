@@ -84,15 +84,6 @@
       {"age" 46} {:age 46}
       {"firstName" "'Neo'" "lastName" "'Anderson'"} {:first-name "Neo" :last_name "Anderson"})))
 
-(t/deftest clj-node->neo4j
-  (t/testing "Convert a Clojure node to a sanitized Neo4j node representation"
-    (t/are [neo4j-node clj-node]
-        (= neo4j-node (sut/clj-node->neo4j clj-node))
-      {:ref-id "p" :labels ["Person"] :props nil} {:ref-id "p" :labels [:person]}
-      {:id 1 :labels ["Person"] :props nil} {:id 1 :labels [:person]}
-      {:id 1 :labels '() :props {"firstName" "'Neo'" "lastName" "'Anderson'"}} {:id 1 :props {:first-name "Neo" :last-name "Anderson"}}
-      {:ref-id "p" :id 1 :labels ["Person" "Owner"] :props {"firstName" "'Neo'" "lastName" "'Anderson'"}} {:ref-id "p" :id 1 :labels [:person :owner] :props {:first-name "Neo" :last-name "Anderson"}})))
-
 (t/deftest clj-rel->neo4j
   (t/testing "Convert a Clojure relationship to a sanitized Neo4j relationship representation"
     (t/are [neo4j-rel clj-rel]
