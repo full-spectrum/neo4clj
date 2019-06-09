@@ -104,9 +104,20 @@
   :lookups - collection of neo4j lookup representations
   :nodes - collection of neo4j node representations
   :relationships  - collection of neo4j relationship representations
-  :return-aliases - collection of aliases to return from query"
+  :returns - collection of aliases to return from query"
   [conn ^clojure.lang.APersistentMap graph]
   (execute! conn (builder/create-graph-query graph)))
+
+(defn get-graph!
+  "Lookups the nodes based on given relationships and returns specified entities
+
+  Format of the graph is:
+  :nodes - collection of neo4j node representations
+  :relationships  - collection of neo4j relationship representations
+  :return-aliases - collection of aliases to return from query
+  :unique-by - reference-id to use for creating a list of distinct nodes"
+  [conn ^clojure.lang.APersistentMap graph]
+  (execute! conn (builder/get-graph-query graph)))
 
 (defn add-labels!
   "Takes a collection of labels and adds them to the found neo4j entities"
@@ -126,9 +137,9 @@
   "Takes a property map and updates the found neo4j objects with it based on the
   following rules:
 
-  Keys only existing in the given property map is added to the object
-  Keys only existing on the found object is kept as is
-  Keys found in both are updated with values from the given property map"
+  Keys existing only in the given property map is added to the object
+  Keys existing only in the property map on the found object is kept as is
+  Keys existing in both property maps are updated with values from the given property map"
   [conn
    ^clojure.lang.APersistentMap neo4j-entity
    ^clojure.lang.APersistentMap props]

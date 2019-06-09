@@ -60,6 +60,45 @@
                  (when-not (empty? returns)
                    (vector (str "RETURN " (str/join "," returns)))))))
 
+(defn node-reference
+  [nodes {:keys [ref-id] :as node}]
+  (let [found-node (first (filter #(= ref-id (:ref-id %)) nodes))]
+    (vector
+     found-node
+     (if found-node
+       (node-representation found-node)
+       [(str "(" ref-id ")")]))))
+
+(defn lookup-graph-query
+  [relationships nodes]
+  (loop [rels relationships
+         nodes (set nodes)
+         withs #{}
+         query nil]
+    (if (empty? rels)
+      query
+      (let [{:keys [from to] :as rel} (first rels)
+            [from-node [from-node-cypher from-where-cypher]] (node-reference nodes from)
+            [to-node [to-node-cypher to-where-cypher]] (node-reference nodes to)]
+        (recur (rest rels)
+               (remove #{from-node to-node} nodes)
+               (conj withs (:ref-id from) (:ref-id to))
+               (str (when query
+                      (str query " WITH " (clojure.string/join "," withs) " "))
+                    (str "MATCH "
+                         (relationship-representation from-node-cypher to-node-cypher rel)
+                         (when (or from-where-cypher to-where-cypher)
+                           (str " WHERE " (clojure.string/join " AND " (remove nil? [from-where-cypher to-where-cypher])))))))))))
+
+(defn get-graph-query
+  "Takes a graph representation and fetches the nodes and relationship defined
+  and returns any aliases specified in the representation"
+  [{:keys [nodes relationships returns]}]
+  (let [nodes (map convert/clj-node->neo4j nodes)
+        relationships (map convert/clj-relationship->neo4j relationships)]
+    (str (lookup-graph-query relationships nodes)
+         (when-not (empty? returns)
+           (str " RETURN " (str/join "," returns))))))
 
 (defn modify-labels-query
   "Takes a operation and a neo4j object representation, along with a collection
