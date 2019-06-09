@@ -9,10 +9,6 @@
   "Sanitize a node label based on the Cypher style guide"
   (->PascalCaseString label))
 
-(defn cypher-labels [labels]
-  "Sanitize node labels based on the Cypher style guide"
-  (map cypher-label labels))
-
 (defn cypher-property-key [key]
   "Sanitize a property key based on the Cypher style guide"
   (->camelCaseString key))

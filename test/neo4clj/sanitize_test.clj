@@ -13,13 +13,6 @@
       "BestFriend" "Best_friend"
       "NextBestFriend" :next-best_friend)))
 
-(t/deftest cypher-labels
-  (t/testing "Sanitation of a collection of Clojure labels to match the CYPHER style guide"
-    (t/are [cyphers labels]
-        (= cyphers (sut/cypher-labels labels))
-      ["Car"] [:car]
-      '("Car" "Friend" "BestFriend") ["car" :Friend :best_friend])))
-
 (t/deftest cypher-property-key
   (t/testing "Sanitation of a Clojure property key to match the CYPHER style guide"
     (t/are [cypher key]

@@ -34,22 +34,30 @@
         cypher-single-key (apply list single-key-props-coll)
         cypher-multi-keys (apply list multi-key-props-coll)))))
 
+(t/deftest cypher-labels
+  (t/testing "Generating a Cypher representaiton of labels"
+    (t/are [cypher labels]
+        (= cypher (sut/cypher-labels labels))
+      "" []
+      ":Address" [:address]
+      ":Base:Address" [:address :base])))
+
 (t/deftest node-representation
   (t/testing "Cypher representation of a node including where parts"
     (t/are [cypher-parts node]
         (= cypher-parts (sut/node-representation node))
       ["(n)" nil] {:ref-id "n"}
       ["(p:Person)" nil] {:ref-id "p" :labels [:person]}
-      ["(c:Person:Customer)" nil] {:ref-id "c" :labels [:person :customer]}
+      ["(c:Person:Customer)" nil] {:ref-id "c" :labels [:customer :person]}
       ["(c:Person:Customer {firstName: 'Neo', lastName: 'Anderson'})" nil] {:ref-id "c"
-                                                                                :labels [:person :customer]
+                                                                                :labels [:customer :person]
                                                                                 :props {:first-name "Neo"
                                                                                         :last_name "Anderson"}}
       ["(c:Person:Customer)" "c.firstName = 'Neo' OR c.lastName = 'Anderson'"] {:ref-id "c"
-                                                                                :labels [:person :customer]
+                                                                                :labels [:customer :person]
                                                                                 :props [{:first-name "Neo"}
                                                                                         {:last_name "Anderson"}]}
-      ["(c)" "ID(c) = 12"] {:ref-id "c" :labels [:person :customer] :id 12})))
+      ["(c)" "ID(c) = 12"] {:ref-id "c" :labels [:customer :person] :id 12})))
 
 (t/deftest create-node-query
   (t/testing "Cypher for creating a node with/without return"
@@ -78,10 +86,10 @@
           (= expected-cypher (sut/lookup-query entity return?))
         "MATCH (G__123) WHERE ID(G__123) = 4" (assoc node :id 4) false
         "MATCH (G__123) WHERE ID(G__123) = 4 RETURN G__123" (assoc node :id 4) true
-        "MATCH (G__123:Label1:Label2 {a: '1', b: '2'})" node false
-        "MATCH (G__123:Label1:Label2 {a: '1', b: '2'}) RETURN G__123" node true
-        "MATCH (G__123:Label1:Label2) WHERE G__123.number = '12345678' OR G__123.number = '87654321'" search-node false
-        "MATCH (G__123:Label1:Label2) WHERE G__123.number = '12345678' OR G__123.number = '87654321' RETURN G__123" search-node true))))
+        "MATCH (G__123:Label2:Label1 {a: '1', b: '2'})" node false
+        "MATCH (G__123:Label2:Label1 {a: '1', b: '2'}) RETURN G__123" node true
+        "MATCH (G__123:Label2:Label1) WHERE G__123.number = '12345678' OR G__123.number = '87654321'" search-node false
+        "MATCH (G__123:Label2:Label1) WHERE G__123.number = '12345678' OR G__123.number = '87654321' RETURN G__123" search-node true))))
 
 (t/deftest index-query
   (t/testing "Cypher to create/delete a index"
@@ -134,16 +142,16 @@
             "CREATE (f)-[r:TEST_RELATION {a: 1}]->(l) RETURN r" by-ref-rel true
             "MATCH (G__1) WHERE ID(G__1) = 1 MATCH (G__2) WHERE ID(G__2) = 2 CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__2)" by-id-rel false
             "MATCH (G__1) WHERE ID(G__1) = 1 MATCH (G__2) WHERE ID(G__2) = 2 CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__2) RETURN r" by-id-rel true
-            "MATCH (G__1:Fragment:Phone {b: 2}) MATCH (G__2:Fragment:Address {c: '6'}) CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__2)" by-lookup-rel false
-            "MATCH (G__1:Fragment:Phone {b: 2}) MATCH (G__2:Fragment:Address {c: '6'}) CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__2) RETURN r" by-lookup-rel true
-            "MATCH (G__1:Fragment:Phone) WHERE G__1.b = 2 OR G__1.b = 5 CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__123)" by-combined-rel false
-            "MATCH (G__1:Fragment:Phone) WHERE G__1.b = 2 OR G__1.b = 5 CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__123) RETURN r" by-combined-rel true))))))
+            "MATCH (G__1:Phone:Fragment {b: 2}) MATCH (G__2:Address:Fragment {c: '6'}) CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__2)" by-lookup-rel false
+            "MATCH (G__1:Phone:Fragment {b: 2}) MATCH (G__2:Address:Fragment {c: '6'}) CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__2) RETURN r" by-lookup-rel true
+            "MATCH (G__1:Phone:Fragment) WHERE G__1.b = 2 OR G__1.b = 5 CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__123)" by-combined-rel false
+            "MATCH (G__1:Phone:Fragment) WHERE G__1.b = 2 OR G__1.b = 5 CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__123) RETURN r" by-combined-rel true))))))
 
 (t/deftest modify-labels-query
   (t/testing "Cypher for Modifying labels on an entity"
     (t/are [operation]
         (= (str "MATCH (G__1) WHERE ID(G__1) = 1 " operation " G__1:Person:Director")
-           (sut/modify-labels-query operation {:ref-id "G__1" :id 1} [:person :director]))
+           (sut/modify-labels-query operation {:ref-id "G__1" :id 1} [:director :person]))
       "SET"
       "REMOVE")))
 
