@@ -10,6 +10,29 @@
   []
   (str (gensym)))
 
+(defmulti where
+  "Returns the bolt query where representation based on the given criterias"
+  (fn [ref-id criterias] (class criterias)))
+
+(defmethod where clojure.lang.APersistentMap
+  [ref-id criterias]
+  (->>
+   (convert/hash-map->properties criterias)
+   (map (fn [[k v]] (str ref-id "." k " = " v)))
+   (str/join " AND ")))
+
+(defmethod where clojure.lang.APersistentSet
+  [ref-id criterias]
+  (str/join " OR " (map (partial where ref-id) criterias)))
+
+(defmethod where clojure.lang.IPersistentCollection
+  [ref-id criterias]
+  (where ref-id (set criterias)))
+
+(defmethod where nil
+  [ref-id criterias]
+  "")
+
 (defn properties
   "Convert a map into its bolt query equivalent"
   [props]

@@ -1,31 +1,7 @@
 (ns neo4clj.query-builder
   (:require [clojure.string :as str]
-            [neo4clj.convert :as convert]
             [neo4clj.cypher :as cypher]
             [neo4clj.sanitize :as sanitize]))
-
-(defmulti where-query
-  "Returns the bolt query where representation based on the given criterias"
-  (fn [ref-id criterias] (class criterias)))
-
-(defmethod where-query clojure.lang.APersistentMap
-  [ref-id criterias]
-  (->>
-   (convert/hash-map->properties criterias)
-   (map (fn [[k v]] (str ref-id "." k " = " v)))
-   (str/join " AND ")))
-
-(defmethod where-query clojure.lang.APersistentSet
-  [ref-id criterias]
-  (str/join " OR " (map (partial where-query ref-id) criterias)))
-
-(defmethod where-query clojure.lang.IPersistentCollection
-  [ref-id criterias]
-  (where-query ref-id (set criterias)))
-
-(defmethod where-query nil
-  [ref-id criterias]
-  "")
 
 (defn node-representation
   "Takes a node representation and returns its cypher equivalent
@@ -39,7 +15,7 @@
     [(str "(" ref-id (cypher/labels labels)
           (when (map? props) (cypher/properties props))
           ")")
-     (when (and props (not (map? props))) (where-query ref-id props))]))
+     (when (and props (not (map? props))) (cypher/where ref-id props))]))
 
 (defn create-node-query
   "Returns the bolt query to create a node based on the given node representation"
