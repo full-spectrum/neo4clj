@@ -86,7 +86,7 @@
                (str (when query
                       (str query " WITH " (clojure.string/join "," withs) " "))
                     (str "MATCH "
-                         (relationship-representation from-node-cypher to-node-cypher rel)
+                         (cypher/relationship from-node-cypher to-node-cypher rel)
                          (when (or from-where-cypher to-where-cypher)
                            (str " WHERE " (clojure.string/join " AND " (remove nil? [from-where-cypher to-where-cypher])))))))))))
 
