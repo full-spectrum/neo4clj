@@ -37,7 +37,7 @@
 
 (t/deftest index-query
   (t/testing "Cypher to create/delete a index"
-    (let [expected-cypher " INDEX ON Phone(number)"]
+    (let [expected-cypher " INDEX ON :Phone(number)"]
       (t/are [operation]
           (= (str operation expected-cypher) (sut/index-query operation :phone [:number]))
         "CREATE"
