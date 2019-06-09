@@ -66,7 +66,7 @@
     (vector
      found-node
      (if found-node
-       (node-representation found-node)
+       (cypher/node found-node)
        [(str "(" ref-id ")")]))))
 
 (defn lookup-graph-query
