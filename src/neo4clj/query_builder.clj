@@ -4,13 +4,6 @@
             [neo4clj.cypher :as cypher]
             [neo4clj.sanitize :as sanitize]))
 
-(defn generate-ref-id
-  "Generate a unique id that can be used to reference an Neo4j entity
-  until they are assigned one by the database, which happens when
-  they are stored."
-  []
-  (str (gensym)))
-
 (defn properties-query
   "Convert a map into its bolt query equivalent"
   [m]
@@ -101,8 +94,8 @@
   "Returns the bolt query to create a one directional relationship
   based on the given relationship representation"
   [{:keys [ref-id from to] :as rel} return?]
-  (let [from-ref-id (or (:ref-id from) (generate-ref-id))
-        to-ref-id (or (:ref-id to) (generate-ref-id))]
+  (let [from-ref-id (or (:ref-id from) (cypher/gen-ref-id))
+        to-ref-id (or (:ref-id to) (cypher/gen-ref-id))]
     (str (lookup-non-referred-node from-ref-id from)
          (lookup-non-referred-node to-ref-id to)
          "CREATE "

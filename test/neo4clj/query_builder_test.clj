@@ -1,19 +1,7 @@
 (ns neo4clj.query-builder-test
   (:require [clojure.test :as t]
+            [neo4clj.cypher :as cypher]
             [neo4clj.query-builder :as sut]))
-
-(t/deftest generate-ref-id
-  (t/testing "Generate a unique reference id"
-    (with-redefs [gensym (fn [] (str "G__123"))]
-      (t/is (= "G__123" (sut/generate-ref-id))))))
-
-(t/deftest properties-query
-  (t/testing "Cypher representation of property map"
-    (t/are [cypher props]
-        (= cypher (sut/properties-query props))
-      nil nil
-      "{}" {}
-      "{a: 1, b: 'test', c: TRUE}" {"a" 1 "b" "'test'" "c" "TRUE"})))
 
 (t/deftest where-query
   (t/testing "Cypher for where parts based on properties"
@@ -33,14 +21,6 @@
         cypher-multi-keys multi-key-props-coll
         cypher-single-key (apply list single-key-props-coll)
         cypher-multi-keys (apply list multi-key-props-coll)))))
-
-(t/deftest cypher-labels
-  (t/testing "Generating a Cypher representaiton of labels"
-    (t/are [cypher labels]
-        (= cypher (sut/cypher-labels labels))
-      "" []
-      ":Address" [:address]
-      ":Base:Address" [:address :base])))
 
 (t/deftest node-representation
   (t/testing "Cypher representation of a node including where parts"
@@ -121,7 +101,7 @@
 
 (t/deftest create-relationship-query
   (let [next-gensym (atom 0)]
-    (with-redefs [sut/generate-ref-id (fn [] (str "G__" (swap! next-gensym inc)))]
+    (with-redefs [cypher/gen-ref-id (fn [] (str "G__" (swap! next-gensym inc)))]
       (t/testing "Cypher to create a relationship between two nodes"
         (let [by-ref-rel {:ref-id "r"
                           :from {:ref-id "f"}
