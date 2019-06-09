@@ -3,25 +3,11 @@
             [neo4clj.cypher :as cypher]
             [neo4clj.sanitize :as sanitize]))
 
-(defn node-representation
-  "Takes a node representation and returns its cypher equivalent
-
-  The return value is an vector with the first part being the actual node
-  and the second the where clause for the node lookup"
-  [{:keys [id ref-id labels props]}]
-  (if id
-    [(str "(" ref-id ")")
-     (str "ID(" ref-id ") = " id)]
-    [(str "(" ref-id (cypher/labels labels)
-          (when (map? props) (cypher/properties props))
-          ")")
-     (when (and props (not (map? props))) (cypher/where ref-id props))]))
-
 (defn create-node-query
   "Returns the bolt query to create a node based on the given node representation"
   [{:keys [ref-id] :as node} return?]
   (str "CREATE "
-       (first (node-representation node))
+       (first (cypher/node node))
        (when return? (str " RETURN " ref-id))))
 
 (defn lookup-query
@@ -30,7 +16,7 @@
   A lookup representation needs the :reference.id to be set and
   either the :id or :labels and :properties keys"
   [{:keys [ref-id] :as node} return?]
-  (let [cypher-node (node-representation node)]
+  (let [cypher-node (cypher/node node)]
     (str "MATCH "
          (str (first cypher-node)
               (when (second cypher-node)

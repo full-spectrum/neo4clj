@@ -41,3 +41,20 @@
       "" []
       ":Address" [:address]
       ":Base:Address" [:address :base])))
+
+(deftest node
+  (testing "Cypher representation of a node including where parts"
+    (are [cypher-parts node]
+        (= cypher-parts (sut/node node))
+      ["(n)" nil] {:ref-id "n"}
+      ["(p:Person)" nil] {:ref-id "p" :labels [:person]}
+      ["(c:Person:Customer)" nil] {:ref-id "c" :labels [:customer :person]}
+      ["(c:Person:Customer {firstName: 'Neo', lastName: 'Anderson'})" nil] {:ref-id "c"
+                                                                                :labels [:customer :person]
+                                                                                :props {:first-name "Neo"
+                                                                                        :last_name "Anderson"}}
+      ["(c:Person:Customer)" "c.firstName = 'Neo' OR c.lastName = 'Anderson'"] {:ref-id "c"
+                                                                                :labels [:customer :person]
+                                                                                :props [{:first-name "Neo"}
+                                                                                        {:last_name "Anderson"}]}
+      ["(c)" "ID(c) = 12"] {:ref-id "c" :labels [:customer :person] :id 12})))

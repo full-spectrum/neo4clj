@@ -48,3 +48,17 @@
    labels
    (reduce #(conj %1 (sanitize/cypher-label %2) ":") '())
    str/join))
+
+(defn node
+  "Takes a node representation and returns its cypher equivalent.
+
+  The return value is an vector with the first part being the actual node and
+  the second the where clause for the node lookup."
+  [{:keys [id ref-id props] :as node}]
+  (if id
+    [(str "(" ref-id ")")
+     (str "ID(" ref-id ") = " id)]
+    [(str "(" ref-id (labels (:labels node))
+          (when (map? props) (properties props))
+          ")")
+     (when (and props (not (map? props))) (where ref-id props))]))
