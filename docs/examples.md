@@ -88,7 +88,7 @@ Notice that dashes is not allowed in parameter names
 ## Node CRUD
 
 This section shows how to do basic CRUD operations on nodes through Neo4clj convenience functions.
-To learn more about the Clojure representation of a node please see our [representations](docs/representations.md) page
+To learn more about the Clojure representation of a node please see our [representations](representations.md) page
 
 ### Create a Node
 
@@ -105,7 +105,7 @@ To learn more about the Clojure representation of a node please see our [represe
 
 ### Find nodes in Neo4j
 
-The entry given to `find-nodes!` is a lookup representation. To learn more about the Clojure lookup representation see our [representations](docs/representations.md) page
+The entry given to `find-nodes!` is a lookup representation. To learn more about the Clojure lookup representation see our [representations](representations.md) page
 
 ~~~clojure
 (require '[neo4clj.client :as client])
@@ -120,17 +120,17 @@ The entry given to `find-nodes!` is a lookup representation. To learn more about
 
 ### Update and Delete Node
 
-See the section [Update and Delete Entity](#update-and-delete-entity)
+See the section [Update and Delete Entity](#update-and-delete-neo4j-entity)
 
 
 ## Relationship CRUD
 
 This section shows how to do basic CRUD operations on relationships through Neo4clj convenience functions.
-To learn more about the Clojure representation of a relationship please see our [representations](docs/representations.md) page
+To learn more about the Clojure representation of a relationship please see our [representations](representations.md) page
 
 ### Create a Relationship
 
-The keys `from` and `to` are Lookup representations. To learn more about the Clojure representation of a lookup entry please see our [representations](docs/representations.md) page
+The keys `from` and `to` are Lookup representations. To learn more about the Clojure representation of a lookup entry please see our [representations](representations.md) page
 
 ~~~clojure
 (require '[neo4clj.client :as client])
@@ -150,7 +150,7 @@ To fetch relationships from the Neo4j database, please refer to the section [Get
 
 ### Update and Delete Relationship
 
-See the section [Update and Delete Entity](#update-and-delete-entity)
+See the section [Update and Delete Entity](#update-and-delete-neo4j-entity)
 
 
 ## Update and Delete Neo4j Entity
@@ -161,7 +161,7 @@ In this section you can find examples on how to update specific parts a Node or 
 
 To change the labels of a node we have added two convenience functions.
 Both the `add-labels!` and `remove-labels!` functions takes a lookup representation as second argument.
-To learn more about the Clojure representation of a lookup entry please see our [representations](docs/representations.md) page
+To learn more about the Clojure representation of a lookup entry please see our [representations](representations.md) page
 
 #### Add labels
 
@@ -187,7 +187,7 @@ To learn more about the Clojure representation of a lookup entry please see our 
 
 To change the properties of a node or relationship we have added two convenience functions.
 Both the `update-properties!` and `replace-properties!` functions takes a lookup representation as second argument.
-To learn more about the Clojure representation of a lookup entry please see our [representations](docs/representations.md) page
+To learn more about the Clojure representation of a lookup entry please see our [representations](representations.md) page
 
 #### Update properties
 
@@ -223,7 +223,7 @@ The `delete!` function takes a lookup representation as second argument and dele
 
 Notice: You need to ensure you have deleted all relatiohsips to a node before you can delete the node.
 
-To learn more about the Clojure representation of a lookup entry please see our [representations](docs/representations.md) page
+To learn more about the Clojure representation of a lookup entry please see our [representations](representations.md) page
 
 ~~~clojure
 (require '[neo4clj.client :as client])
@@ -247,7 +247,7 @@ The `nodes` key dictates what to nodes create. The entries are node representati
 The `relatioships` key dictates what to create. The entries are relationship representations and it's possible to use lookups ref-id in the `to` and `from` keys.
 The `returns` key dictates which entities to return as the result of the call. This is a vector of ref-id from collections in the other three keys.
 
-To learn more about the Clojure representation of a create graph structure and it's individual parts please see our [representations](docs/representations.md) page
+To learn more about the Clojure representation of a create graph structure and it's individual parts please see our [representations](representations.md) page
 
 ~~~clojure
 (require '[neo4clj.client :as client])
@@ -270,7 +270,7 @@ The `nodes` key dictates which nodes to get. The entries are lookup representati
 The `relatioships` key dictates which relationships needs to exists between the nodes. The entries are relationship representations.
 The `returns` key dictates which entities to return as the result of the call. This is a vector of ref-id from the nodes and relationship keys.
 
-To learn more about the Clojure representation of a get graph structure and it's individual parts please see our [representations](docs/representations.md) page
+To learn more about the Clojure representation of a get graph structure and it's individual parts please see our [representations](representations.md) page
 
 ~~~clojure
 (require '[neo4clj.client :as client])
