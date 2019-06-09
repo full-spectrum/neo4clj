@@ -3,7 +3,8 @@
             [com.rpl.specter :as specter :refer [MAP-VALS]]
             [neo4clj.sanitize :as sanitize]
             [java-time :as t])
-  (:import [org.neo4j.driver.v1.types Entity
+  (:import [org.neo4j.driver.v1 Values]
+           [org.neo4j.driver.v1.types Entity
                                       Node
                                       Relationship]
            [org.neo4j.driver.v1 Record
@@ -64,8 +65,8 @@
     :else value))
 
 (defn hash-map->properties
-  "Convert a maps keys and values into its bolt equivalent"
-  [m]
+  "Convert map keys and values into its bolt equivalent"
+  [^clojure.lang.IPersistentMap m]
   (when m
     (reduce-kv (fn [m k v] (assoc m (sanitize/cypher-property-key k) (clj-value->neo4j-value v))) {} m)))
 
@@ -75,3 +76,12 @@
   (-> rel
       (update :type sanitize/cypher-relation-type)
       (update :props hash-map->properties)))
+
+(defn clj-parameters->neo4j
+  "Convert a Clojure parameter map to a Neo4j parameter array"
+  [^clojure.lang.IPersistentMap params]
+  (->> params
+       clojure.walk/stringify-keys
+       (mapcat identity)
+       (into-array Object)
+       Values/parameters))

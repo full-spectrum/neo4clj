@@ -46,4 +46,4 @@
   ([^StatementRunner runner ^String query]
    (execute runner query {}))
   ([^StatementRunner runner ^String query ^Map params]
-   (convert/neo4j->clj (.run runner query params))))
+   (convert/neo4j->clj (.run runner query (convert/clj-parameters->neo4j params)))))
