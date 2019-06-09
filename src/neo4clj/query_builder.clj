@@ -1,6 +1,7 @@
 (ns neo4clj.query-builder
   (:require [clojure.string :as str]
             [neo4clj.convert :as convert]
+            [neo4clj.cypher :as cypher]
             [neo4clj.sanitize :as sanitize]))
 
 (defn generate-ref-id
@@ -39,15 +40,6 @@
   [ref-id criterias]
   "")
 
-(defn cypher-labels
-  "Takes a collection of labels (keywords) and returns a Cypher string
-  representing the labels. Order is reversed but doesn't matter."
-  [labels]
-  (->>
-   labels
-   (reduce #(conj %1 (sanitize/cypher-label %2) ":") '())
-   str/join))
-
 (defn node-representation
   "Takes a node representation and returns its cypher equivalent
 
@@ -57,7 +49,7 @@
   (if id
     [(str "(" ref-id ")")
      (str "ID(" ref-id ") = " id)]
-    [(str "(" ref-id (cypher-labels labels)
+    [(str "(" ref-id (cypher/labels labels)
           (when (map? props)
             (str " " (properties-query (convert/hash-map->properties props))))
           ")")
@@ -137,7 +129,7 @@
 
   Allowed operations are: SET, REMOVE"
   [operation {:keys [ref-id] :as entity} labels]
-  (str (lookup-query entity false) " " operation " " ref-id (cypher-labels labels)))
+  (str (lookup-query entity false) " " operation " " ref-id (cypher/labels labels)))
 
 (defn modify-properties-query
   "Takes a neo4j entity representation, along with a properties map
