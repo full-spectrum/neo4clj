@@ -52,17 +52,6 @@
       "MATCH (n:Person) " {:labels [:person]}
       "MATCH (n) WHERE ID(n) = 12 " {:id 12})))
 
-(t/deftest relationship-representation
-  (t/testing "Cypher representation of a relationship"
-    (t/are [cypher rel]
-        (= cypher (sut/relationship-representation "(p:Person)" "(c:Company)" rel))
-      "(p:Person)-[]->(c:Company)" {}
-      "(p:Person)-[r]->(c:Company)" {:ref-id "r"}
-      "(p:Person)-[:EMPLOYEE]->(c:Company)" {:type :employee}
-      "(p:Person)-[r:FORMER_EMPLOYEE]->(c:Company)" {:ref-id "r" :type :former-employee}
-      "(p:Person)-[r {hiredAt: 2008}]->(c:Company)" {:ref-id "r" :props {:hired-at 2008}}
-      "(p:Person)-[r:EMPLOYEE {hiredAt: 2008}]->(c:Company)" {:ref-id "r" :type :employee :props {:hired-at 2008}})))
-
 (t/deftest create-relationship-query
   (let [next-gensym (atom 0)]
     (with-redefs [cypher/gen-ref-id (fn [] (str "G__" (swap! next-gensym inc)))]

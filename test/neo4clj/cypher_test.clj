@@ -58,3 +58,14 @@
                                                                                 :props [{:first-name "Neo"}
                                                                                         {:last_name "Anderson"}]}
       ["(c)" "ID(c) = 12"] {:ref-id "c" :labels [:customer :person] :id 12})))
+
+(deftest relationship
+  (testing "Cypher representation of a relationship"
+    (are [cypher rel]
+        (= cypher (sut/relationship "p:Person" "c:Company" rel))
+      "(p:Person)-[]->(c:Company)" {}
+      "(p:Person)-[r]->(c:Company)" {:ref-id "r"}
+      "(p:Person)-[:EMPLOYEE]->(c:Company)" {:type :employee}
+      "(p:Person)-[r:FORMER_EMPLOYEE]->(c:Company)" {:ref-id "r" :type :former-employee}
+      "(p:Person)-[r {hiredAt: 2008}]->(c:Company)" {:ref-id "r" :props {:hired-at 2008}}
+      "(p:Person)-[r:EMPLOYEE {hiredAt: 2008}]->(c:Company)" {:ref-id "r" :type :employee :props {:hired-at 2008}})))

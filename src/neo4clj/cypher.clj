@@ -62,3 +62,11 @@
           (when (map? props) (properties props))
           ")")
      (when (and props (not (map? props))) (where ref-id props))]))
+
+(defn relationship
+  "Takes a relationship representation and returns its cypher equivalent"
+  [from to {:keys [ref-id type props]}]
+  (str "(" from ")-[" ref-id
+       (when type (str ":" (sanitize/cypher-relation-type type)))
+       (when (map? props) (properties props))
+       "]->(" to ")"))

@@ -37,14 +37,6 @@
           false)
          " ")))
 
-(defn relationship-representation
-  "Takes a relationship representation and returns its cypher equivalent"
-  [from-cypher to-cypher {:keys [ref-id type props]}]
-  (str from-cypher "-[" ref-id
-       (when type (str ":" (sanitize/cypher-relation-type type)))
-       (when (map? props) (cypher/properties props))
-       "]->" to-cypher))
-
 (defn create-relationship-query
   "Returns the bolt query to create a one directional relationship
   based on the given relationship representation"
@@ -54,9 +46,7 @@
     (str (lookup-non-referred-node from-ref-id from)
          (lookup-non-referred-node to-ref-id to)
          "CREATE "
-         (relationship-representation (str "(" from-ref-id ")")
-                                      (str "(" to-ref-id ")")
-                                      rel)
+         (cypher/relationship from-ref-id to-ref-id rel)
          (when return? (str " RETURN " ref-id)))))
 
 (defn create-graph-query
