@@ -76,12 +76,12 @@
    (java-interop/execute runner query params)))
 
 (defn create-index!
-  [conn label prop-key]
-  (execute! conn (builder/index-query "CREATE" label prop-key)))
+  [conn label prop-keys]
+  (execute! conn (builder/index-query "CREATE" label prop-keys)))
 
 (defn drop-index!
-  [conn label prop-key]
-  (execute! conn (builder/index-query "DROP" label prop-key)))
+  [conn label prop-keys]
+  (execute! conn (builder/index-query "DROP" label prop-keys)))
 
 (defn create-node!
   [conn ^clojure.lang.APersistentMap node]

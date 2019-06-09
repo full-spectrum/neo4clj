@@ -25,9 +25,9 @@
 
 (defn index-query
   "Creates a query to modify index, allowed operations are: CREATE, DROP"
-  [operation label prop-key]
-  (str operation " INDEX ON " (sanitize/cypher-label label) "("
-        (sanitize/cypher-property-key prop-key) ")"))
+  [operation label prop-keys]
+  (str operation " INDEX ON :" (sanitize/cypher-label label) "("
+        (str/join ", " (map sanitize/cypher-property-key prop-keys)) ")"))
 
 (defn lookup-non-referred-node [ref-id node]
   "Creates a query to lookup a node without a ref-id and refers it as given ref-id"
