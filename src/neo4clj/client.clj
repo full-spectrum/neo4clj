@@ -10,14 +10,14 @@
   Supports the current options:
   :log :level [:all :error :warn :info :off] - defaults to :warn
   :encryption [:required :none] - defaults to :required"
-  ^Driver [{:keys [url usr pwd opts]}]
-  (if (or (nil? usr) (nil? pwd))
-    (if (nil? opts)
-      (java-interop/connect url)
-      (java-interop/connect url (java-interop/build-config opts)))
-    (if (nil? opts)
-      (java-interop/connect url usr pwd)
-      (java-interop/connect url usr pwd (java-interop/build-config opts)))))
+  (^Driver [^String url]
+   (java-interop/connect url))
+  (^Driver [^String url ^clojure.lang.IPersistentMap opts]
+   (java-interop/connect url (java-interop/build-config opts)))
+  (^Driver [^String url ^String usr ^String pwd]
+   (java-interop/connect url usr pwd))
+  (^Driver [^String url ^String usr ^String pwd ^clojure.lang.IPersistentMap opts]
+   (java-interop/connect url usr pwd (java-interop/build-config opts))))
 
 (defn disconnect
   "Disconnect the given connection"

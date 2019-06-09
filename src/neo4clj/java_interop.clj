@@ -20,7 +20,7 @@
   Supports the current options:
   :log :level [:all :error :warn :info :off] - defaults to :warn
   :encryption [:required :none] - defaults to :required"
-  ^Config [opts]
+  ^Config [^clojure.lang.IPersistentMap opts]
   (let [log-level (get-in opts [:log :level] :warn)
         encryption-level (if (= (:encryption opts) :none)
                            Config$EncryptionLevel/NONE
