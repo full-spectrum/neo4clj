@@ -43,21 +43,19 @@
       ":Base:Address" [:address :base])))
 
 (deftest node
-  (testing "Cypher representation of a node including where parts"
+  (testing "Cypher representation of a node"
     (are [cypher-parts node]
         (= cypher-parts (sut/node node))
-      ["(n)" nil] {:ref-id "n"}
-      ["(p:Person)" nil] {:ref-id "p" :labels [:person]}
-      ["(c:Person:Customer)" nil] {:ref-id "c" :labels [:customer :person]}
-      ["(c:Person:Customer {firstName: 'Neo', lastName: 'Anderson'})" nil] {:ref-id "c"
-                                                                                :labels [:customer :person]
-                                                                                :props {:first-name "Neo"
-                                                                                        :last_name "Anderson"}}
-      ["(c:Person:Customer)" "c.firstName = 'Neo' OR c.lastName = 'Anderson'"] {:ref-id "c"
-                                                                                :labels [:customer :person]
-                                                                                :props [{:first-name "Neo"}
-                                                                                        {:last_name "Anderson"}]}
-      ["(c)" "ID(c) = 12"] {:ref-id "c" :labels [:customer :person] :id 12})))
+      "(n)" {:ref-id "n"}
+      "(p:Person)" {:ref-id "p" :labels [:person]}
+      "(c:Person:Customer)" {:ref-id "c" :labels [:customer :person]}
+      "(c {firstName: 'Neo', lastName: 'Anderson'})" {:ref-id "c"
+                                                      :props {:first-name "Neo"
+                                                              :last_name "Anderson"}}
+      "(c:Person:Customer {firstName: 'Neo', lastName: 'Anderson'})" {:ref-id "c"
+                                                                      :labels [:customer :person]
+                                                                      :props {:first-name "Neo"
+                                                                                        :last_name "Anderson"}})))
 
 (deftest relationship
   (testing "Cypher representation of a relationship"
@@ -69,3 +67,20 @@
       "(p:Person)-[r:FORMER_EMPLOYEE]->(c:Company)" {:ref-id "r" :type :former-employee}
       "(p:Person)-[r {hiredAt: 2008}]->(c:Company)" {:ref-id "r" :props {:hired-at 2008}}
       "(p:Person)-[r:EMPLOYEE {hiredAt: 2008}]->(c:Company)" {:ref-id "r" :type :employee :props {:hired-at 2008}})))
+
+(deftest lookup
+  (testing "Cypher representation of a lookup entity including where parts"
+    (are [cypher-parts lookup]
+        (= cypher-parts (sut/lookup lookup))
+      ["(n)" nil] {:ref-id "n"}
+      ["(p:Person)" nil] {:ref-id "p" :labels [:person]}
+      ["(c:Person:Customer)" nil] {:ref-id "c" :labels [:customer :person]}
+      ["(c:Person:Customer {firstName: 'Neo', lastName: 'Anderson'})" nil] {:ref-id "c"
+                                                                            :labels [:customer :person]
+                                                                            :props {:first-name "Neo"
+                                                                                    :last_name "Anderson"}}
+      ["(c:Person:Customer)" "c.firstName = 'Neo' OR c.lastName = 'Anderson'"] {:ref-id "c"
+                                                                                :labels [:customer :person]
+                                                                                :props [{:first-name "Neo"}
+                                                                                        {:last_name "Anderson"}]}
+      ["(c)" "ID(c) = 12"] {:ref-id "c" :labels [:customer :person] :id 12})))

@@ -6,21 +6,19 @@
 (defn create-node-query
   "Returns the bolt query to create a node based on the given node representation"
   [{:keys [ref-id] :as node} return?]
-  (str "CREATE "
-       (first (cypher/node node))
-       (when return? (str " RETURN " ref-id))))
+  (str "CREATE " (cypher/node node) (when return? (str " RETURN " ref-id))))
 
 (defn lookup-query
   "Takes a lookup representation and generates a bolt query
 
   A lookup representation needs the :reference.id to be set and
   either the :id or :labels and :properties keys"
-  [{:keys [ref-id] :as node} return?]
-  (let [cypher-node (cypher/node node)]
+  [{:keys [ref-id] :as lookup} return?]
+  (let [cypher-lookup (cypher/lookup lookup)]
     (str "MATCH "
-         (str (first cypher-node)
-              (when (second cypher-node)
-                (str " WHERE " (second cypher-node))))
+         (str (first cypher-lookup)
+              (when (second cypher-lookup)
+                (str " WHERE " (second cypher-lookup))))
          (when return? (str " RETURN " ref-id)))))
 
 (defn index-query
@@ -66,7 +64,7 @@
     (vector
      found-node
      (if found-node
-       (cypher/node found-node)
+       (cypher/lookup found-node)
        [(str "(" ref-id ")")]))))
 
 (defn lookup-graph-query

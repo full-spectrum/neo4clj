@@ -50,23 +50,30 @@
    str/join))
 
 (defn node
-  "Takes a node representation and returns its cypher equivalent.
-
-  The return value is an vector with the first part being the actual node and
-  the second the where clause for the node lookup."
+  "Takes a node representation and returns its cypher equivalent."
   [{:keys [id ref-id props] :as node}]
-  (if id
-    [(str "(" ref-id ")")
-     (str "ID(" ref-id ") = " id)]
-    [(str "(" ref-id (labels (:labels node))
-          (when (map? props) (properties props))
-          ")")
-     (when (and props (not (map? props))) (where ref-id props))]))
+  (str "(" ref-id (labels (:labels node))
+       (when props (properties props))
+       ")"))
 
 (defn relationship
   "Takes a relationship representation and returns its cypher equivalent"
   [from to {:keys [ref-id type props]}]
   (str "(" from ")-[" ref-id
        (when type (str ":" (sanitize/cypher-relation-type type)))
-       (when (map? props) (properties props))
+       (when props (properties props))
        "]->(" to ")"))
+
+(defn lookup
+  "Takes a lookup representation and returns its cypher equvalent
+
+  The return value is an vector with the first part being the actual entity and
+  the second is the where clause for the lookup."
+  [{:keys [id ref-id props] :as lookup}]
+  (if id
+    [(str "(" ref-id ")")
+     (str "ID(" ref-id ") = " id)]
+    [(str "(" ref-id (labels (:labels lookup))
+          (when (map? props) (properties props))
+          ")")
+     (when (and props (not (map? props))) (where ref-id props))]))
