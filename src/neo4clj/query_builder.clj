@@ -94,11 +94,9 @@
   "Takes a graph representation and fetches the nodes and relationship defined
   and returns any aliases specified in the representation"
   [{:keys [nodes relationships returns]}]
-  (let [nodes (map convert/clj-node->neo4j nodes)
-        relationships (map convert/clj-relationship->neo4j relationships)]
-    (str (lookup-graph-query relationships nodes)
-         (when-not (empty? returns)
-           (str " RETURN " (str/join "," returns))))))
+  (str (lookup-graph-query relationships nodes)
+       (when-not (empty? returns)
+         (str " RETURN " (str/join "," returns)))))
 
 (defn modify-labels-query
   "Takes a operation and a neo4j object representation, along with a collection
