@@ -1,5 +1,6 @@
 (ns neo4clj.cypher
   (:require [clojure.string :as str]
+            [neo4clj.convert :as convert]
             [neo4clj.sanitize :as sanitize]))
 
 (defn gen-ref-id
@@ -8,6 +9,13 @@
   they are stored."
   []
   (str (gensym)))
+
+(defn properties
+  "Convert a map into its bolt query equivalent"
+  [props]
+  (let [converted-props (convert/hash-map->properties props)]
+    (when converted-props
+      (str " {" (str/join ", " (map (fn [[k v]] (str k ": " v)) converted-props)) "}"))))
 
 (defn labels
   "Takes a collection of labels (keywords) and returns a Cypher string

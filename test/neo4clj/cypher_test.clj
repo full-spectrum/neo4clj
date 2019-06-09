@@ -7,6 +7,14 @@
     (with-redefs [gensym (fn [] (str "G__123"))]
       (is (= "G__123" (sut/gen-ref-id))))))
 
+(deftest properties
+  (testing "Cypher representation of property map"
+    (are [cypher props]
+        (= cypher (sut/properties props))
+      nil nil
+      " {}" {}
+      " {a: 1, b: 'test', c: TRUE}" {:a 1 :b "test" :c true})))
+
 (deftest labels
   (testing "Generating a Cypher representaiton of labels"
     (are [cypher labels]

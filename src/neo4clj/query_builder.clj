@@ -4,12 +4,6 @@
             [neo4clj.cypher :as cypher]
             [neo4clj.sanitize :as sanitize]))
 
-(defn properties-query
-  "Convert a map into its bolt query equivalent"
-  [m]
-  (when (map? m)
-    (str "{" (str/join ", " (map (fn [[k v]] (str k ": " v)) m)) "}")))
-
 (defmulti where-query
   "Returns the bolt query where representation based on the given criterias"
   (fn [ref-id criterias] (class criterias)))
@@ -43,8 +37,7 @@
     [(str "(" ref-id ")")
      (str "ID(" ref-id ") = " id)]
     [(str "(" ref-id (cypher/labels labels)
-          (when (map? props)
-            (str " " (properties-query (convert/hash-map->properties props))))
+          (when (map? props) (cypher/properties props))
           ")")
      (when (and props (not (map? props))) (where-query ref-id props))]))
 
@@ -87,7 +80,7 @@
   [from-cypher to-cypher {:keys [ref-id type props]}]
   (str from-cypher "-[" ref-id
        (when type (str ":" (sanitize/cypher-relation-type type)))
-       (when (map? props) (str " " (properties-query (convert/hash-map->properties props))))
+       (when (map? props) (cypher/properties props))
        "]->" to-cypher))
 
 (defn create-relationship-query
@@ -130,7 +123,7 @@
   Allowed operations are: =, +="
   [operation {:keys [ref-id] :as neo4j-entity} props]
   (str (lookup-query neo4j-entity false) " SET "
-       ref-id " " operation " " (properties-query (convert/hash-map->properties props))))
+       ref-id " " operation (cypher/properties props)))
 
 (defn delete-query
   "Takes a neo4j entity representation and deletes it"
