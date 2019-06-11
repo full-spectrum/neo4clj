@@ -1,5 +1,46 @@
 # Examples
 
+Below we have given examples of the most common operations in Neo4clj.
+
+## Table of Contents
+
+- [Connect to neo4j server](#connect-to-neo4j-server)
+  * [Basic connection](#basic-connection)
+  * [Authenticated connection](#authenticated-connection)
+  * [Connection with options](#connection-with-options)
+- [Disconnect from neo4j server](#disconnect-from-neo4j-server)
+- [Execute queries](#execute-queries)
+  * [Execute query without parameters](#execute-query-without-parameters)
+  * [Execute query with parameters](#execute-query-with-parameters)
+- [Node CRUD](#node-crud)
+  * [Create a Node](#create-a-node)
+  * [Find nodes in Neo4j](#find-nodes-in-neo4j)
+  * [Update and Delete Node](#update-and-delete-node)
+- [Relationship CRUD](#relationship-crud)
+  * [Create a Relationship](#create-a-relationship)
+  * [Find relationships in Neo4j](#find-relationships-in-neo4j)
+  * [Update and Delete Relationship](#update-and-delete-relationship)
+- [Update and Delete Neo4j Entity](#update-and-delete-neo4j-entity)
+  * [Update Node (Labels)](#update-node--labels-)
+    + [Add labels](#add-labels)
+    + [Remove labels](#remove-labels)
+  * [Update Node or Relationship (properties)](#update-node-or-relationship--properties-)
+    + [Update properties](#update-properties)
+    + [Replace properties](#replace-properties)
+  * [Delete Node or Relationship](#delete-node-or-relationship)
+- [Graph CRUD](#graph-crud)
+  * [Create Graph](#create-graph)
+  * [Get Graph](#get-graph)
+- [Create and drop indexes](#create-and-drop-indexes)
+  * [Create index](#create-index)
+  * [Drop index](#drop-index)
+- [Sessions and Transactions](#sessions-and-transactions)
+  * [Execute multiple queries in a session](#execute-multiple-queries-in-a-session)
+  * [Execute multiple queries in a transaction](#execute-multiple-queries-in-a-transaction)
+    + [Simple transaction](#simple-transaction)
+    + [Transaction with rollback](#transaction-with-rollback)
+
+
 ## Connect to neo4j server
 
 This section will show you how to connect with or without authentication and
@@ -333,3 +374,61 @@ Drop an index across multiple properties
 
 (client/drop-index! conn :person [:first-name :last-name])
 ~~~
+
+## Sessions and Transactions
+
+This section describes how to execute several queries in a session or transaction.
+
+### Execute multiple queries in a session
+
+By default all the operations you run in Neo4clj will be run in a separate session, but if you want to
+run multiple queries in a session you can do it as shown below.
+
+~~~clojure
+(require '[neo4clj.client :as client])
+
+(def conn (client/connect "bolt://localhost:7687" "neo4j" "password"))
+
+(client/with-session conn session
+  (cliet/create-node! session {:ref-id "p" :labels [:person] :props {:first-name "Neo"}})
+  (cliet/create-node! session {:ref-id "p" :labels [:person] :props {:first-name "Morpheus"}}))
+~~~
+
+Notice the session variable is a placeholder, you can use as the connection in your queries.
+
+### Execute multiple queries in a transaction
+
+Running queries in a transaction ensures all queries are run without errors before commiting the changes to Neo4j.
+In Neo4clj all transactions are auto-commiting on sucess.
+
+#### Simple transaction
+
+~~~clojure
+(require '[neo4clj.client :as client])
+
+(def conn (client/connect "bolt://localhost:7687" "neo4j" "password"))
+
+(client/with-transaction conn transaction
+  (cliet/create-node! transaction {:ref-id "p" :labels [:person] :props {:first-name "Neo"}})
+  (cliet/create-node! transaction {:ref-id "p" :labels [:person] :props {:first-name "Morpheus"}}))
+~~~
+
+Notice the transaction variable is a placeholder, you can use as the connection in your queries.
+
+#### Transaction with rollback
+
+By default all exceptions occuring within the body of the `with-transaction` will result in a roll-back,
+but it is also possible to do a manual rollback as shown below.
+
+~~~clojure
+(require '[neo4clj.client :as client])
+
+(def conn (client/connect "bolt://localhost:7687" "neo4j" "password"))
+
+(client/with-transaction conn transaction
+  (cliet/create-node! transaction {:ref-id "p" :labels [:person] :props {:first-name "Neo"}})
+  (cliet/create-node! transaction {:ref-id "p" :labels [:person] :props {:first-name "Morpheus"}})
+  (client/rollback trasaction))
+~~~
+
+Notice the transaction variable is a placeholder, you can use as the connection in your queries.
