@@ -75,12 +75,13 @@ This also works on authenticated connections.
 ~~~clojure
 (require '[neo4clj.client :as client])
 
-(client/connect
-  "bolt://localhost:7687"
-  "neo4j"
-  "password"
-  {:log {:level :info}
-         :encryption :none})
+(def conn
+  (client/connect
+    "bolt://localhost:7687"
+    "neo4j"
+    "password"
+    {:log {:level :info}
+           :encryption :none}))
 ~~~
 
 In the current version we support the following options:
@@ -179,7 +180,7 @@ The keys `from` and `to` are Lookup representations. To learn more about the Clo
 (def conn (client/connect "bolt://localhost:7687" "neo4j" "password"))
 
 (client/create-relationship! conn {:ref-id "p"
-                                   :type [:employee]
+                                   :type :employee
                                    :from {:labels [:person] :props {:first-name "Neo"}}
                                    :to {:id 12}
                                    :props {:position "Developer"}})
@@ -228,6 +229,7 @@ To learn more about the Clojure representation of a lookup entry please see our 
 
 To change the properties of a node or relationship we have added two convenience functions.
 Both the `update-properties!` and `replace-properties!` functions takes a lookup representation as second argument.
+
 To learn more about the Clojure representation of a lookup entry please see our [representations](representations.md) page
 
 #### Update properties
@@ -390,8 +392,8 @@ run multiple queries in a session you can do it as shown below.
 (def conn (client/connect "bolt://localhost:7687" "neo4j" "password"))
 
 (client/with-session conn session
-  (cliet/create-node! session {:ref-id "p" :labels [:person] :props {:first-name "Neo"}})
-  (cliet/create-node! session {:ref-id "p" :labels [:person] :props {:first-name "Morpheus"}}))
+  (client/create-node! session {:ref-id "p" :labels [:person] :props {:first-name "Neo"}})
+  (client/create-node! session {:ref-id "p" :labels [:person] :props {:first-name "Morpheus"}}))
 ~~~
 
 Notice the session variable is a placeholder, you can use as the connection in your queries.
@@ -409,8 +411,8 @@ In Neo4clj all transactions are auto-commiting on sucess.
 (def conn (client/connect "bolt://localhost:7687" "neo4j" "password"))
 
 (client/with-transaction conn transaction
-  (cliet/create-node! transaction {:ref-id "p" :labels [:person] :props {:first-name "Neo"}})
-  (cliet/create-node! transaction {:ref-id "p" :labels [:person] :props {:first-name "Morpheus"}}))
+  (client/create-node! transaction {:ref-id "p" :labels [:person] :props {:first-name "Neo"}})
+  (client/create-node! transaction {:ref-id "p" :labels [:person] :props {:first-name "Morpheus"}}))
 ~~~
 
 Notice the transaction variable is a placeholder, you can use as the connection in your queries.
@@ -426,9 +428,9 @@ but it is also possible to do a manual rollback as shown below.
 (def conn (client/connect "bolt://localhost:7687" "neo4j" "password"))
 
 (client/with-transaction conn transaction
-  (cliet/create-node! transaction {:ref-id "p" :labels [:person] :props {:first-name "Neo"}})
-  (cliet/create-node! transaction {:ref-id "p" :labels [:person] :props {:first-name "Morpheus"}})
-  (client/rollback trasaction))
+  (client/create-node! transaction {:ref-id "p" :labels [:person] :props {:first-name "Neo"}})
+  (client/create-node! transaction {:ref-id "p" :labels [:person] :props {:first-name "Morpheus"}})
+  (client/rollback transaction))
 ~~~
 
 Notice the transaction variable is a placeholder, you can use as the connection in your queries.
