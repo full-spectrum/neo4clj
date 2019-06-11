@@ -29,17 +29,26 @@
   ^Session [^Driver conn]
   (.session conn))
 
+(defmacro with-session
+  "Creates a session with the given name on the given connection and executes the body
+  within the session.
+
+  The session can be used with the given name in the rest of the body."
+  [^Driver conn session & body]
+  `(with-open [~session (create-session ~conn)]
+        ~@body))
+
 (defn begin-transaction
   "Start a new transaction on the given Neo4J session"
   ^Transaction [^Session session]
   (.beginTransaction session))
 
-(defn commit-transaction
+(defn commit!
   "Commits the given transaction"
   [^Transaction trans]
   (.success trans))
 
-(defn rollback-transaction
+(defn rollback
   "Rolls the given transaction back"
   [^Transaction trans]
   (.failure trans))
@@ -48,15 +57,15 @@
   "Create a transaction with given name on the given connection execute the body
   within the transaction.
 
-  The transaction can be used under the given name in the rest of the body."
+  The transaction can be used with the given name in the rest of the body."
   [^Driver conn trans & body]
   `(with-open [~trans (begin-transaction (create-session ~conn))]
       (try
         ~@body
         (catch Exception e#
-          (rollback-transaction ~trans)
+          (rollback ~trans)
           (throw e#))
-        (finally (commit-transaction ~trans)))))
+        (finally (commit! ~trans)))))
 
 (defmulti execute!
   "Execute the given query on the specified connection with optional parameters"
