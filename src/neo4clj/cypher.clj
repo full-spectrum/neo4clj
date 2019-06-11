@@ -59,10 +59,10 @@
 (defn relationship
   "Takes a relationship representation and returns its cypher equivalent"
   [from to {:keys [ref-id type props]}]
-  (str "(" from ")-[" ref-id
+  (str from "-[" ref-id
        (when type (str ":" (sanitize/cypher-relation-type type)))
        (when props (properties props))
-       "]->(" to ")"))
+       "]->" to ))
 
 (defn lookup
   "Takes a lookup representation and returns its cypher equvalent

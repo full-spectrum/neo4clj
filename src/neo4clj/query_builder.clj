@@ -44,7 +44,10 @@
     (str (lookup-non-referred-node from-ref-id from)
          (lookup-non-referred-node to-ref-id to)
          "CREATE "
-         (cypher/relationship from-ref-id to-ref-id rel)
+         (cypher/relationship
+          (str "(" from-ref-id ")")
+          (str "(" to-ref-id ")")
+          rel)
          (when return? (str " RETURN " ref-id)))))
 
 (defn create-graph-query
@@ -97,22 +100,23 @@
          (str " RETURN " (str/join "," returns)))))
 
 (defn modify-labels-query
-  "Takes a operation and a neo4j object representation, along with a collection
+  "Takes a operation and a neo4j node representation, along with a collection
   of labels and either sets or removes them
 
   Allowed operations are: SET, REMOVE"
-  [operation {:keys [ref-id] :as entity} labels]
-  (str (lookup-query entity false) " " operation " " ref-id (cypher/labels labels)))
+  [operation {:keys [ref-id] :or {ref-id "n"} :as node} labels]
+  (str (lookup-query (assoc node :ref-id ref-id) false) " "
+       operation " " ref-id (cypher/labels labels)))
 
 (defn modify-properties-query
   "Takes a neo4j entity representation, along with a properties map
 
   Allowed operations are: =, +="
-  [operation {:keys [ref-id] :as neo4j-entity} props]
-  (str (lookup-query neo4j-entity false) " SET "
+  [operation {:keys [ref-id] :or {ref-id "e"} :as entity} props]
+  (str (lookup-query (assoc entity :ref-id ref-id) false) " SET "
        ref-id " " operation (cypher/properties props)))
 
 (defn delete-query
   "Takes a neo4j entity representation and deletes it"
-  [{:keys [ref-id] :as neo4j-entity}]
-  (str (lookup-query neo4j-entity false) " DELETE " ref-id))
+  [{:keys [ref-id] :or {ref-id "e"} :as entity}]
+  (str (lookup-query (assoc entity :ref-id ref-id) false) " DELETE " ref-id))

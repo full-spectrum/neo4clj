@@ -129,18 +129,18 @@
   (execute! conn (builder/get-graph-query graph)))
 
 (defn add-labels!
-  "Takes a collection of labels and adds them to the found neo4j entities"
+  "Takes a collection of labels and adds them to the found neo4j nodes"
   [conn
-   ^clojure.lang.APersistentMap neo4j-entity
+   ^clojure.lang.APersistentMap neo4j-node
    ^clojure.lang.APersistentVector labels]
-  (execute! conn (builder/modify-labels-query "SET" neo4j-entity labels)))
+  (execute! conn (builder/modify-labels-query "SET" neo4j-node labels)))
 
 (defn remove-labels!
-  "Takes a collection of labels and removes them from found neo4j objects"
+  "Takes a collection of labels and removes them from found neo4j nodes"
   [conn
-   ^clojure.lang.APersistentMap neo4j-entity
+   ^clojure.lang.APersistentMap neo4j-node
    ^clojure.lang.APersistentVector labels]
-  (execute! conn (builder/modify-labels-query "REMOVE" neo4j-entity labels)))
+  (execute! conn (builder/modify-labels-query "REMOVE" neo4j-node labels)))
 
 (defn update-properties!
   "Takes a property map and updates the found neo4j objects with it based on the
