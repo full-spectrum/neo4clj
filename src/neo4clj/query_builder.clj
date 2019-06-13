@@ -5,8 +5,8 @@
 
 (defn create-node-query
   "Returns the bolt query to create a node based on the given node representation"
-  [{:keys [ref-id] :as node} return?]
-  (str "CREATE " (cypher/node node) (when return? (str " RETURN " ref-id))))
+  [{:keys [ref-id] :or {ref-id (cypher/gen-ref-id)} :as node} return?]
+  (str "CREATE " (cypher/node (assoc node :ref-id ref-id)) (when return? (str " RETURN " ref-id))))
 
 (defn lookup-query
   "Takes a lookup representation and generates a bolt query
@@ -38,7 +38,7 @@
 (defn create-relationship-query
   "Returns the bolt query to create a one directional relationship
   based on the given relationship representation"
-  [{:keys [ref-id from to] :as rel} return?]
+  [{:keys [ref-id from to] :or {ref-id (cypher/gen-ref-id)} :as rel} return?]
   (let [from-ref-id (or (:ref-id from) (cypher/gen-ref-id))
         to-ref-id (or (:ref-id to) (cypher/gen-ref-id))]
     (str (lookup-non-referred-node from-ref-id from)
@@ -47,7 +47,7 @@
          (cypher/relationship
           (str "(" from-ref-id ")")
           (str "(" to-ref-id ")")
-          rel)
+          (assoc rel :ref-id ref-id))
          (when return? (str " RETURN " ref-id)))))
 
 (defn create-graph-query

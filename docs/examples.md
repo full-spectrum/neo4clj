@@ -4,6 +4,7 @@ Below we have given examples of the most common operations in Neo4clj.
 
 ## Table of Contents
 
+- [Basic requirements](#basic-requirements)
 - [Connect to neo4j server](#connect-to-neo4j-server)
   * [Basic connection](#basic-connection)
   * [Authenticated connection](#authenticated-connection)
@@ -40,6 +41,20 @@ Below we have given examples of the most common operations in Neo4clj.
     + [Simple transaction](#simple-transaction)
     + [Transaction with rollback](#transaction-with-rollback)
 
+## Basic requirements
+
+All examples will assume you have added Neo4clj to your project dependencies and required
+it in your namespace with the alias `client`.
+
+If a connection is needed for the example it will be reffered to as the variable `conn`.
+
+Here is the code for the basic setup, please change the connect arguments to match your own setup.
+
+~~~clojure
+(def conn (client/connect "bolt://localhost:7687"))
+
+(def conn (client/connect "bolt://localhost:7687"))
+~~~
 
 ## Connect to neo4j server
 
@@ -49,32 +64,24 @@ how to change some of the basic options for the connection.
 ### Basic connection
 
 ~~~clojure
-(require '[neo4clj.client :as client])
-
 (def conn (client/connect "bolt://localhost:7687"))
 ~~~
 
 ### Authenticated connection
 
 ~~~clojure
-(require '[neo4clj.client :as client])
-
 (def conn (client/connect "bolt://localhost:7687" "neo4j" "password"))
 ~~~
 
 ### Connection with options
 
 ~~~clojure
-(require '[neo4clj.client :as client])
-
 (def conn (client/connect "bolt://localhost:7687" {:log {:level :info}}))
 ~~~
 
 This also works on authenticated connections.
 
 ~~~clojure
-(require '[neo4clj.client :as client])
-
 (def conn
   (client/connect
     "bolt://localhost:7687"
@@ -94,10 +101,6 @@ In the current version we support the following options:
 ## Disconnect from neo4j server
 
 ~~~clojure
-(require '[neo4clj.client :as client])
-
-(def conn (client/connect "bolt://localhost:7687" "neo4j" "password"))
-
 (client/disconnect conn)
 ~~~
 
@@ -108,20 +111,12 @@ This section shows how to execute raw bolt queries against on a open connection
 ### Execute query without parameters
 
 ~~~clojure
-(require '[neo4clj.client :as client])
-
-(def conn (client/connect "bolt://localhost:7687"))
-
 (client/execute! conn "MATCH (n:Person) RETURN n")
 ~~~
 
 ### Execute query with parameters
 
 ~~~clojure
-(require '[neo4clj.client :as client])
-
-(def conn (client/connect "bolt://localhost:7687"))
-
 (client/execute! conn "MATCH (n:Person {firstName: $first_name}) RETURN n" {:first_name "Neo"})
 ~~~
 
@@ -135,10 +130,6 @@ To learn more about the Clojure representation of a node please see our [represe
 ### Create a Node
 
 ~~~clojure
-(require '[neo4clj.client :as client])
-
-(def conn (client/connect "bolt://localhost:7687" "neo4j" "password"))
-
 (client/create-node! conn {:ref-id "p"
                            :labels [:person]
                            :props {:first-name "Neo"
@@ -150,10 +141,6 @@ To learn more about the Clojure representation of a node please see our [represe
 The entry given to `find-nodes!` is a lookup representation. To learn more about the Clojure lookup representation see our [representations](representations.md) page
 
 ~~~clojure
-(require '[neo4clj.client :as client])
-
-(def conn (client/connect "bolt://localhost:7687" "neo4j" "password"))
-
 (client/find-nodes! conn {:ref-id "p"
                           :labels [:person]
                           :props {:first-name "Neo"
@@ -175,10 +162,6 @@ To learn more about the Clojure representation of a relationship please see our 
 The keys `from` and `to` are Lookup representations. To learn more about the Clojure representation of a lookup entry please see our [representations](representations.md) page
 
 ~~~clojure
-(require '[neo4clj.client :as client])
-
-(def conn (client/connect "bolt://localhost:7687" "neo4j" "password"))
-
 (client/create-relationship! conn {:ref-id "p"
                                    :type :employee
                                    :from {:labels [:person] :props {:first-name "Neo"}}
@@ -208,20 +191,12 @@ To learn more about the Clojure representation of a lookup entry please see our 
 #### Add labels
 
 ~~~clojure
-(require '[neo4clj.client :as client])
-
-(def conn (client/connect "bolt://localhost:7687" "neo4j" "password"))
-
 (client/add-labels! conn {:id 45} [:person :salesman])
 ~~~
 
 #### Remove labels
 
 ~~~clojure
-(require '[neo4clj.client :as client])
-
-(def conn (client/connect "bolt://localhost:7687" "neo4j" "password"))
-
 (client/remove-labels! conn {:labels [:person] :props {:first-name "Neo"}} [:person :salesman])
 ~~~
 
@@ -241,23 +216,15 @@ This function will update an existing properties map based on the following rule
 ..* Keys existing in both property maps are updated with values from the given property map
 
 ~~~clojure
-(require '[neo4clj.client :as client])
-
-(def conn (client/connect "bolt://localhost:7687" "neo4j" "password"))
-
-(client/update-properties! conn {:labels [:person] :first-name "Thomas"} {:first-name "Neo"})
+(client/update-props! conn {:labels [:person] :first-name "Thomas"} {:first-name "Neo"})
 ~~~
 
 #### Replace properties
 
-This function will replace an existing property map with the given one
+This function will replace an existing property map with the given one.
 
 ~~~clojure
-(require '[neo4clj.client :as client])
-
-(def conn (client/connect "bolt://localhost:7687" "neo4j" "password"))
-
-(client/update-properties! conn {:labels [:person] :first-name "Thomas"} {:last-name-only "Anderson"})
+(client/replace-props! conn {:labels [:person] :first-name "Thomas"} {:last-name-only "Anderson"})
 ~~~
 
 ### Delete Node or Relationship
@@ -269,10 +236,6 @@ Notice: You need to ensure you have deleted all relatiohsips to a node before yo
 To learn more about the Clojure representation of a lookup entry please see our [representations](representations.md) page
 
 ~~~clojure
-(require '[neo4clj.client :as client])
-
-(def conn (client/connect "bolt://localhost:7687" "neo4j" "password"))
-
 (client/delete! conn {:labels [:person] :first-name "Neo"})
 ~~~
 
@@ -293,10 +256,6 @@ The `returns` key dictates which entities to return as the result of the call. T
 To learn more about the Clojure representation of a create graph structure and it's individual parts please see our [representations](representations.md) page
 
 ~~~clojure
-(require '[neo4clj.client :as client])
-
-(def conn (client/connect "bolt://localhost:7687" "neo4j" "password"))
-
 (client/create-graph!
   conn
   {:lookups       [{:ref-id "c" :labels [:city] :props {:name "New York"}}]
@@ -316,11 +275,7 @@ The `returns` key dictates which entities to return as the result of the call. T
 To learn more about the Clojure representation of a get graph structure and it's individual parts please see our [representations](representations.md) page
 
 ~~~clojure
-(require '[neo4clj.client :as client])
-
-(def conn (client/connect "bolt://localhost:7687" "neo4j" "password"))
-
-(client/get-graph!
+(client/get-graph
   conn
   {:nodes         [{:ref-id "c" :labels [:city]}
                    {:ref-id "p" :labels [:person] :props {:first-name "Neo"}}]
@@ -338,20 +293,12 @@ To help handling index creation and drops, we have added convenience functions f
 Create an index on a single property
 
 ~~~clojure
-(require '[neo4clj.client :as client])
-
-(def conn (client/connect "bolt://localhost:7687" "neo4j" "password"))
-
 (client/create-index! conn :person [:first-name])
 ~~~
 
 Create an index across multiple properties
 
 ~~~clojure
-(require '[neo4clj.client :as client])
-
-(def conn (client/connect "bolt://localhost:7687" "neo4j" "password"))
-
 (client/create-index! conn :person [:first-name :last-name])
 ~~~
 
@@ -360,20 +307,12 @@ Create an index across multiple properties
 Drop an index on a single property
 
 ~~~clojure
-(require '[neo4clj.client :as client])
-
-(def conn (client/connect "bolt://localhost:7687" "neo4j" "password"))
-
 (client/drop-index! conn :person [:first-name])
 ~~~
 
 Drop an index across multiple properties
 
 ~~~clojure
-(require '[neo4clj.client :as client])
-
-(def conn (client/connect "bolt://localhost:7687" "neo4j" "password"))
-
 (client/drop-index! conn :person [:first-name :last-name])
 ~~~
 
@@ -387,10 +326,6 @@ By default all the operations you run in Neo4clj will be run in a separate sessi
 run multiple queries in a session you can do it as shown below.
 
 ~~~clojure
-(require '[neo4clj.client :as client])
-
-(def conn (client/connect "bolt://localhost:7687" "neo4j" "password"))
-
 (client/with-session conn session
   (client/create-node! session {:ref-id "p" :labels [:person] :props {:first-name "Neo"}})
   (client/create-node! session {:ref-id "p" :labels [:person] :props {:first-name "Morpheus"}}))
@@ -406,10 +341,6 @@ In Neo4clj all transactions are auto-commiting on sucess.
 #### Simple transaction
 
 ~~~clojure
-(require '[neo4clj.client :as client])
-
-(def conn (client/connect "bolt://localhost:7687" "neo4j" "password"))
-
 (client/with-transaction conn transaction
   (client/create-node! transaction {:ref-id "p" :labels [:person] :props {:first-name "Neo"}})
   (client/create-node! transaction {:ref-id "p" :labels [:person] :props {:first-name "Morpheus"}}))
@@ -423,10 +354,6 @@ By default all exceptions occuring within the body of the `with-transaction` wil
 but it is also possible to do a manual rollback as shown below.
 
 ~~~clojure
-(require '[neo4clj.client :as client])
-
-(def conn (client/connect "bolt://localhost:7687" "neo4j" "password"))
-
 (client/with-transaction conn transaction
   (client/create-node! transaction {:ref-id "p" :labels [:person] :props {:first-name "Neo"}})
   (client/create-node! transaction {:ref-id "p" :labels [:person] :props {:first-name "Morpheus"}})

@@ -60,7 +60,7 @@
 (deftest relationship
   (testing "Cypher representation of a relationship"
     (are [cypher rel]
-        (= cypher (sut/relationship "p:Person" "c:Company" rel))
+        (= cypher (sut/relationship "(p:Person)" "(c:Company)" rel))
       "(p:Person)-[]->(c:Company)" {}
       "(p:Person)-[r]->(c:Company)" {:ref-id "r"}
       "(p:Person)-[:EMPLOYEE]->(c:Company)" {:type :employee}

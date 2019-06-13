@@ -48,7 +48,6 @@ Neo4clj supports the following features via the Bolt Protocol:
 * [Cypher queries](http://docs.neo4j.org/chunked/stable/cypher-query-lang.html)
 * Sessions
 * Transactions
-* Full support through current Neo4J java driver
 
 Neo4clj also supports the following operations through idomatic functions:
 

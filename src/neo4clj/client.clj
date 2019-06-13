@@ -117,7 +117,7 @@
   [conn ^clojure.lang.APersistentMap graph]
   (execute! conn (builder/create-graph-query graph)))
 
-(defn get-graph!
+(defn get-graph
   "Lookups the nodes based on given relationships and returns specified entities
 
   Format of the graph is:
@@ -142,7 +142,7 @@
    ^clojure.lang.APersistentVector labels]
   (execute! conn (builder/modify-labels-query "REMOVE" neo4j-node labels)))
 
-(defn update-properties!
+(defn update-props!
   "Takes a property map and updates the found neo4j objects with it based on the
   following rules:
 
@@ -154,7 +154,7 @@
    ^clojure.lang.APersistentMap props]
   (execute! conn (builder/modify-properties-query "+=" neo4j-entity props)))
 
-(defn replace-properties!
+(defn replace-props!
   "Takes a property map and replaces the properties on all found neo4j objects with it"
   [conn
    ^clojure.lang.APersistentMap neo4j-entity
