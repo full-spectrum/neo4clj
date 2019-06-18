@@ -256,8 +256,11 @@ This section shows how to do basic CRUD operations on a whole graph through Neo4
 To make it easier to create nodes and relationships, we have made a function to do it in one single call.
 
 The `lookups` key specifies a vector of [lookup representations](representations.md#lookup) referring existing nodes in the database.
+
 The `nodes` key specifies a vector of [node representations](representations.md#node) to create.
+
 The `relatioships` key specifies a vector of [relationship representations](representations.md#relationship) to create. It is possible to use `ref-id` from the `lookups` vector in the `to` and `from` keys of the relationship.
+
 The `returns` key specifies a vector of `ref-id` from the other three keys to return as the result of the call.
 
 ~~~clojure
@@ -274,7 +277,9 @@ The `returns` key specifies a vector of `ref-id` from the other three keys to re
 To make it easier to fetch nodes and relationships, we have made a function to do it all in one single call.
 
 The `nodes` key specifies a vector of [lookup representations](representations.md#lookup) of node to get from the database.
+
 The `relatioships` key specifies a vector of [relationship representations](representations.md#relationship) which needs to exists between the nodes to match.
+
 The `returns` key specifies a vector of `ref-id` from the other two keys to return as the result of the call.
 
 ~~~clojure
