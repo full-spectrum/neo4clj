@@ -7,7 +7,7 @@ In Neo4clj there are two different identification forms `ref-id` and `id`.
 The `ref-id` is used to identify a entity in a cypher query and allows the use of the same entity in other parts of the query.
 
 Meanwhile the `id` is used to represent an actual entity in the Neo4j database and can be used in fetches to lookup specific entities.
-The `id` will always be se when an entity is fetched from the Neo4j database.
+The `id` will always be set when an entity is fetched from the Neo4j database.
 
 A entity can have both an `id` and a `ref-id`, but only entities actually persisted in Neo4j will have the `id`.
 

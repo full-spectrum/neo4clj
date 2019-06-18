@@ -43,18 +43,18 @@ Below we have given examples of the most common operations in Neo4clj.
 
 ## Basic requirements
 
-All examples will assume you have added Neo4clj to your project dependencies and required
-it in your namespace with the alias `client`.
-
-If a connection is needed for the example it will be reffered to as the variable `conn`.
-
-Here is the code for the basic setup, please change the connect arguments to match your own setup.
+To make the client available and setup a connection run the following:
 
 ~~~clojure
-(def conn (client/connect "bolt://localhost:7687"))
+(require '[neo4clj.client :as client])
 
 (def conn (client/connect "bolt://localhost:7687"))
 ~~~
+
+Make the Neo4j client and connection available in the client and conn symbols respectively, this is a requirement for
+the subsequent examples to work.
+
+You might need to adjust the connection parameters to match your setup, see below.
 
 ## Connect to neo4j server
 
@@ -180,6 +180,8 @@ See the section [Update and Delete Entity](#update-and-delete-neo4j-entity)
 
 ## Update and Delete Neo4j Entity
 
+Nodes and relationships are both part of the broader category named "entities" and this section will describe how to update and delete them.
+
 In this section you can find examples on how to update specific parts a Node or Relationship and how to delete them.
 
 ### Update Node (Labels)
@@ -203,17 +205,19 @@ To learn more about the Clojure representation of a lookup entry please see our 
 ### Update Node or Relationship (properties)
 
 To change the properties of a node or relationship we have added two convenience functions.
-Both the `update-properties!` and `replace-properties!` functions takes a lookup representation as second argument.
+Both the `update-props!` and `replace-props!` functions takes a lookup representation as second argument.
 
 To learn more about the Clojure representation of a lookup entry please see our [representations](representations.md) page
 
 #### Update properties
 
-This function will update an existing properties map based on the following rules.
+This function takes a connection, a lookup representation and the property map to update matched entities with.
 
-⋅⋅* Keys existing only in the given property map is added to the object
-..* Keys existing only in the property map on the found object is kept as is
-..* Keys existing in both property maps are updated with values from the given property map
+It will update an existing properties map based on the following rules.
+
+* Keys existing only in the given property map is added to the object
+* Keys existing only in the property map on the found object is kept as is
+* Keys existing in both property maps are updated with values from the given property map
 
 ~~~clojure
 (client/update-props! conn {:labels [:person] :first-name "Thomas"} {:first-name "Neo"})
@@ -221,11 +225,14 @@ This function will update an existing properties map based on the following rule
 
 #### Replace properties
 
-This function will replace an existing property map with the given one.
+This function takes a connection, a lookup representation and the property map to replace the property map on matched entities with.
 
 ~~~clojure
 (client/replace-props! conn {:labels [:person] :first-name "Thomas"} {:last-name-only "Anderson"})
 ~~~
+
+So in the example we find all nodes with label `:person` and the property key value pair `:first-name "Thomas"` and replace the
+whole property map, not only the key `:first-name` with the property-map `{:last-name-only "Anderson"}`
 
 ### Delete Node or Relationship
 
@@ -248,12 +255,10 @@ This section shows how to do basic CRUD operations on a whole graph through Neo4
 
 To make it easier to create nodes and relationships, we have made a function to do it in one single call.
 
-The `lookups` key allows you to lookup and refer existing nodes in the Neo4j database. The entries are lookup representations.
-The `nodes` key dictates what to nodes create. The entries are node representations.
-The `relatioships` key dictates what to create. The entries are relationship representations and it's possible to use lookups ref-id in the `to` and `from` keys.
-The `returns` key dictates which entities to return as the result of the call. This is a vector of ref-id from collections in the other three keys.
-
-To learn more about the Clojure representation of a create graph structure and it's individual parts please see our [representations](representations.md) page
+The `lookups` key specifies a vector of [lookup representations](representations.md#lookup) referring existing nodes in the database.
+The `nodes` key specifies a vector of [node representations](representations.md#node) to create.
+The `relatioships` key specifies a vector of [relationship representations](representations.md#relationship) to create. It is possible to use `ref-id` from the `lookups` vector in the `to` and `from` keys of the relationship.
+The `returns` key specifies a vector of `ref-id` from the other three keys to return as the result of the call.
 
 ~~~clojure
 (client/create-graph!
@@ -268,11 +273,9 @@ To learn more about the Clojure representation of a create graph structure and i
 
 To make it easier to fetch nodes and relationships, we have made a function to do it all in one single call.
 
-The `nodes` key dictates which nodes to get. The entries are lookup representations.
-The `relatioships` key dictates which relationships needs to exists between the nodes. The entries are relationship representations.
-The `returns` key dictates which entities to return as the result of the call. This is a vector of ref-id from the nodes and relationship keys.
-
-To learn more about the Clojure representation of a get graph structure and it's individual parts please see our [representations](representations.md) page
+The `nodes` key specifies a vector of [lookup representations](representations.md#lookup) of node to get from the database.
+The `relatioships` key specifies a vector of [relationship representations](representations.md#relationship) which needs to exists between the nodes to match.
+The `returns` key specifies a vector of `ref-id` from the other two keys to return as the result of the call.
 
 ~~~clojure
 (client/get-graph
