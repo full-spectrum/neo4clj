@@ -1,5 +1,6 @@
 (defproject fullspectrum/neo4clj "1.0.0-SNAPSHOT"
   :description "Clojure client for Neo4j"
+  :url "https://github.com/full-spectrum/neo4clj"
   :license {:name "The MIT License"
             :url "http://opensource.org/licenses/MIT"}
   :dependencies [[camel-snake-kebab "0.4.0"]
