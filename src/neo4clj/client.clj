@@ -1,5 +1,6 @@
 (ns neo4clj.client
   (:require [clojure.string :as str]
+            [neo4clj.cypher :as cypher]
             [neo4clj.java-interop :as java-interop]
             [neo4clj.query-builder :as builder])
   (:import  [org.neo4j.driver.v1 Driver Session StatementRunner Transaction]))
@@ -92,19 +93,27 @@
   [conn label prop-keys]
   (execute! conn (builder/index-query "DROP" label prop-keys)))
 
+(defn create-from-builder!
+  [conn ^clojure.lang.APersistentMap entity builder]
+  (let [ref-id (or (:ref-id entity) (cypher/gen-ref-id))]
+    (-> (execute! conn (builder (assoc entity :ref-id ref-id) true))
+        first
+        (get ref-id)
+        (assoc :ref-id ref-id))))
+
+
 (defn create-node!
-  [conn ^clojure.lang.APersistentMap node]
-  (get (first (execute! conn (builder/create-node-query node true)))
-       (:ref-id node)))
+  [conn node]
+  (create-from-builder! conn node builder/create-node-query))
+
+(defn create-relationship!
+  [conn rel]
+  (create-from-builder! conn rel builder/create-relationship-query))
 
 (defn find-nodes!
   [conn ^clojure.lang.APersistentMap node]
   (map #(get % (:ref-id node))
        (execute! conn (builder/lookup-query node true))))
-
-(defn create-relationship!
-  [conn ^clojure.lang.APersistentMap rel]
-  (execute! conn (builder/create-relationship-query rel true)))
 
 (defn create-graph!
   "Optimized function to create a whole graph within a transaction

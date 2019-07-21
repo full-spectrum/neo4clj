@@ -34,6 +34,10 @@
   "Converts a Neo4J internal entity to a Clojure Hash-Map"
   class)
 
+(defmethod neo4j->clj nil
+  [entity]
+  nil)
+
 (defmethod neo4j->clj Node
   [^Node node]
   (assoc (neo4j-entity-basics->clj node)
