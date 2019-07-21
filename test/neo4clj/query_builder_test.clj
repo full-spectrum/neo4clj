@@ -4,27 +4,21 @@
             [neo4clj.query-builder :as sut]))
 
 (t/deftest create-node-query
-  (let [next-gensym (atom 0)]
-    (with-redefs [cypher/gen-ref-id (fn [] (str "G__" (swap! next-gensym inc)))]
-      (t/testing "Cypher for creating a node with/without return"
-        (let [basic-node {:ref-id "G__123"}
-              node-labels (assoc basic-node :labels [:label1])
-              node-props (assoc basic-node :props {:a "1"})
-              node-complete (merge node-labels node-props)
-              node-no-ref-id (dissoc (merge node-labels node-props) :ref-id)]
-          (t/are [query node return?]
-              (= query (do (reset! next-gensym 0)
-                           (sut/create-node-query node return?)))
-            "CREATE (G__123)" basic-node false
-            "CREATE (G__123) RETURN G__123" basic-node true
-            "CREATE (G__123:Label1)" node-labels false
-            "CREATE (G__123:Label1) RETURN G__123" node-labels true
-            "CREATE (G__123 {a: '1'})" node-props false
-            "CREATE (G__123 {a: '1'}) RETURN G__123" node-props true
-            "CREATE (G__123:Label1 {a: '1'})" node-complete false
-            "CREATE (G__123:Label1 {a: '1'}) RETURN G__123" node-complete true
-            "CREATE (G__1:Label1 {a: '1'})" node-no-ref-id false
-            "CREATE (G__1:Label1 {a: '1'}) RETURN G__1" node-no-ref-id true))))))
+  (t/testing "Cypher for creating a node with/without return"
+    (let [basic-node {:ref-id "G__123"}
+          node-labels (assoc basic-node :labels [:label1])
+          node-props (assoc basic-node :props {:a "1"})
+          node-complete (merge node-labels node-props)]
+      (t/are [query node return?]
+          (= query (sut/create-node-query node return?))
+        "CREATE (G__123)" basic-node false
+        "CREATE (G__123) RETURN G__123" basic-node true
+        "CREATE (G__123:Label1)" node-labels false
+        "CREATE (G__123:Label1) RETURN G__123" node-labels true
+        "CREATE (G__123 {a: '1'})" node-props false
+        "CREATE (G__123 {a: '1'}) RETURN G__123" node-props true
+        "CREATE (G__123:Label1 {a: '1'})" node-complete false
+        "CREATE (G__123:Label1 {a: '1'}) RETURN G__123" node-complete true))))
 
 (t/deftest lookup-query
   (t/testing "Cypher for lookup query"
@@ -68,7 +62,6 @@
                           :type :test-relation
                           :props {:a 1}}
               by-id-rel (assoc by-ref-rel :from {:id 1} :to {:id 2})
-              by-id-rel-no-ref-id (dissoc (assoc by-ref-rel :from {:id 1} :to {:id 2}) :ref-id)
               by-lookup-rel (assoc by-ref-rel
                                    :from {:labels [:fragment :phone] :props {:b 2}}
                                    :to {:labels [:fragment :address] :props {:c "6"}})
@@ -80,14 +73,12 @@
                                      (sut/create-relationship-query rel-spec return?)))
             "CREATE (f)-[r:TEST_RELATION {a: 1}]->(l)" by-ref-rel false
             "CREATE (f)-[r:TEST_RELATION {a: 1}]->(l) RETURN r" by-ref-rel true
-            "MATCH (G__2) WHERE ID(G__2) = 1 MATCH (G__3) WHERE ID(G__3) = 2 CREATE (G__2)-[r:TEST_RELATION {a: 1}]->(G__3)" by-id-rel false
-            "MATCH (G__2) WHERE ID(G__2) = 1 MATCH (G__3) WHERE ID(G__3) = 2 CREATE (G__2)-[r:TEST_RELATION {a: 1}]->(G__3) RETURN r" by-id-rel true
-            "MATCH (G__2) WHERE ID(G__2) = 1 MATCH (G__3) WHERE ID(G__3) = 2 CREATE (G__2)-[G__1:TEST_RELATION {a: 1}]->(G__3)" by-id-rel-no-ref-id false
-            "MATCH (G__2) WHERE ID(G__2) = 1 MATCH (G__3) WHERE ID(G__3) = 2 CREATE (G__2)-[G__1:TEST_RELATION {a: 1}]->(G__3) RETURN G__1" by-id-rel-no-ref-id true
-            "MATCH (G__2:Phone:Fragment {b: 2}) MATCH (G__3:Address:Fragment {c: '6'}) CREATE (G__2)-[r:TEST_RELATION {a: 1}]->(G__3)" by-lookup-rel false
-            "MATCH (G__2:Phone:Fragment {b: 2}) MATCH (G__3:Address:Fragment {c: '6'}) CREATE (G__2)-[r:TEST_RELATION {a: 1}]->(G__3) RETURN r" by-lookup-rel true
-            "MATCH (G__2:Phone:Fragment) WHERE G__2.b = 2 OR G__2.b = 5 CREATE (G__2)-[r:TEST_RELATION {a: 1}]->(G__123)" by-combined-rel false
-            "MATCH (G__2:Phone:Fragment) WHERE G__2.b = 2 OR G__2.b = 5 CREATE (G__2)-[r:TEST_RELATION {a: 1}]->(G__123) RETURN r" by-combined-rel true))))))
+            "MATCH (G__1) WHERE ID(G__1) = 1 MATCH (G__2) WHERE ID(G__2) = 2 CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__2)" by-id-rel false
+            "MATCH (G__1) WHERE ID(G__1) = 1 MATCH (G__2) WHERE ID(G__2) = 2 CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__2) RETURN r" by-id-rel true
+            "MATCH (G__1:Phone:Fragment {b: 2}) MATCH (G__2:Address:Fragment {c: '6'}) CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__2)" by-lookup-rel false
+            "MATCH (G__1:Phone:Fragment {b: 2}) MATCH (G__2:Address:Fragment {c: '6'}) CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__2) RETURN r" by-lookup-rel true
+            "MATCH (G__1:Phone:Fragment) WHERE G__1.b = 2 OR G__1.b = 5 CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__123)" by-combined-rel false
+            "MATCH (G__1:Phone:Fragment) WHERE G__1.b = 2 OR G__1.b = 5 CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__123) RETURN r" by-combined-rel true))))))
 
 (t/deftest modify-labels-query
   (t/testing "Cypher for Modifying labels on an entity"
