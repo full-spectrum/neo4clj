@@ -47,17 +47,6 @@
          (cypher/relationship (str "(" from-ref-id ")") (str "(" to-ref-id ")") rel)
          (when return? (str " RETURN " ref-id)))))
 
-(defn create-graph-query
-  "Takes a graph representation and creates the nodes and relationship defined
-  and returns any aliases specified in the representation"
-  [{:keys [lookups nodes relationships returns]}]
-  (str/join " " (concat
-                 (map #(lookup-query % false) lookups)
-                 (map #(create-node-query % false) nodes)
-                 (map #(create-relationship-query % false) relationships)
-                 (when-not (empty? returns)
-                   (vector (str "RETURN " (str/join "," returns)))))))
-
 (defn node-reference
   [nodes {:keys [ref-id] :as node}]
   (let [found-node (first (filter #(= ref-id (:ref-id %)) nodes))]
@@ -88,13 +77,29 @@
                          (when (or from-where-cypher to-where-cypher)
                            (str " WHERE " (clojure.string/join " AND " (remove nil? [from-where-cypher to-where-cypher])))))))))))
 
+(defn get-return-ref-ids
+  "Takes a list or vector of entity representatios or ref-ids and returns a list of ref-ids"
+  [^clojure.lang.IPersistentStack returns]
+  (map #(if (map? %) (:ref-id %) %) returns))
+
+(defn create-graph-query
+  "Takes a graph representation and creates the nodes and relationship defined
+  and returns any aliases specified in the representation"
+  [{:keys [lookups nodes relationships returns]}]
+  (str/join " " (concat
+                 (map #(lookup-query % false) lookups)
+                 (map #(create-node-query % false) nodes)
+                 (map #(create-relationship-query % false) relationships)
+                 (when-not (empty? returns)
+                   (vector (str "RETURN " (str/join "," (get-return-ref-ids returns))))))))
+
 (defn get-graph-query
   "Takes a graph representation and fetches the nodes and relationship defined
   and returns any aliases specified in the representation"
   [{:keys [nodes relationships returns]}]
   (str (lookup-graph-query relationships nodes)
        (when-not (empty? returns)
-         (str " RETURN " (str/join "," returns)))))
+         (str " RETURN " (str/join "," (get-return-ref-ids returns))))))
 
 (defn modify-labels-query
   "Takes a operation and a neo4j node representation, along with a collection
