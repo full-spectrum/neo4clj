@@ -47,6 +47,7 @@
       "Neo" "Neo"
       true true
       false false
+      ["test" "something"] ["test" "something"]
       (time/instant "2018-04-28T12:53:11Z") "2018-04-28T12:53:11Z")))
 
 (t/deftest neo4j-entity-basics->clj
@@ -75,6 +76,8 @@
       "'Neo'" "Neo"
       "TRUE" true
       "FALSE" false
+      "'key'" :key
+      "['test', 'something', 'else']" ["test" "something" "else"]
       "'2018-04-28T12:53:11Z'" (time/instant "2018-04-28T12:53:11Z"))))
 
 (t/deftest hash-map->properties
