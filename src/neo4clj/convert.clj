@@ -57,7 +57,9 @@
        (map #(reduce (fn [m [k v]] (assoc m k (neo4j->clj v))) {} %))))
 
 (defn clj-value->neo4j-value
-  "Convert a given clojure primitive into its bolt query equivalent"
+  "Convert a given clojure primitive into its bolt query equivalent
+  If given a vector or list, all elements within needs to be of the same type.
+  This is a limitation in Neo4j not Neo4clj"
   [value]
   (cond
     (string? value) (str "'" value "'")
@@ -65,6 +67,7 @@
     (nil? value) "NULL"
     (boolean? value) (str/upper-case value)
     (keyword? value) (str "'" (name value) "'")
+    (instance? clojure.lang.IPersistentStack value) (str "[" (str/join ", " (map clj-value->neo4j-value value)) "]")
     (instance? java.time.Instant value) (str "'" (t/format :iso-instant value) "'")
     :else value))
 
