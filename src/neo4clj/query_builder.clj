@@ -69,7 +69,7 @@
             [to-node [to-node-cypher to-where-cypher]] (node-reference nodes to)]
         (recur (rest rels)
                (remove #{from-node to-node} nodes)
-               (conj withs (:ref-id from) (:ref-id to))
+               (disj (conj withs (:ref-id from) (:ref-id to) (:ref-id rel)) nil)
                (str (when query
                       (str query " WITH " (clojure.string/join "," withs) " "))
                     (str "MATCH "
