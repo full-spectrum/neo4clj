@@ -80,6 +80,23 @@
             "MATCH (G__1:Phone:Fragment) WHERE G__1.b = 2 OR G__1.b = 5 CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__123)" by-combined-rel false
             "MATCH (G__1:Phone:Fragment) WHERE G__1.b = 2 OR G__1.b = 5 CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__123) RETURN r" by-combined-rel true))))))
 
+(t/deftest node-reference
+  (t/testing "Cypher to lookup or reference a already lookded up node"
+    (t/are [expected-cypher-parts known-ref-ids node]
+        (= expected-cypher-parts (sut/node-reference known-ref-ids node))
+      ["(G__123:Person)" nil] #{} {:ref-id "G__123" :labels [:person]}
+      ["(G__123 {firstName: 'Neo'})" nil] #{} {:ref-id "G__123" :props {:first-name "Neo"}}
+      ["(G__123)" "ID(G__123) = 14"] #{} {:ref-id "G__123" :id 14}
+      ["(G__123)" nil] #{"G__123"} {:ref-id "G__123" :labels [:person]}
+      ["(G__123)" nil] #{"G__123"} {:ref-id "G__123" :props {:first-name "Neo"}}
+      ["(G__123)" nil] #{"G__123"} {:ref-id "G__123" :id 14})))
+
+(t/deftest non-existing-relationship-query
+  (t/testing "Cypher to create relationship not exists query"
+    (t/are [expected-cypher rel known-ref-ids]
+        (= expected-cypher (sut/non-existing-relationship-query rel known-ref-ids))
+      "NOT (G__1)-[:LIVING_AT]->(G__2)" {:from {:ref-id "G__1" :id 89} :to {:ref-id "G__2" :labels [:city]} :type :living-at} #{"G__1" "G__2"})))
+
 (t/deftest modify-labels-query
   (t/testing "Cypher for Modifying labels on an entity"
     (t/are [operation]
