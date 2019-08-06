@@ -48,34 +48,47 @@
          (when return? (str " RETURN " ref-id)))))
 
 (defn node-reference
-  [nodes {:keys [ref-id] :as node}]
-  (let [found-node (first (filter #(= ref-id (:ref-id %)) nodes))]
-    (vector
-     found-node
-     (if found-node
-       (cypher/lookup found-node)
-       [(str "(" ref-id ")")]))))
+  [known-ref-ids {:keys [ref-id] :as node}]
+  (if (known-ref-ids ref-id)
+    [(str "(" ref-id ")") nil]
+    (cypher/lookup node)))
+
+(defn non-existing-relationship-query
+  "Returns the bolt query where part to test that the given relationship doesn't exists"
+  ([{:keys [from to] :as rel} known-ref-ids]
+   (str "NOT " (cypher/relationship
+                (first (node-reference known-ref-ids from))
+                (first (node-reference known-ref-ids to))
+                rel)))
+  ([rel]
+   (non-existing-relationship-query rel #{})))
 
 (defn lookup-graph-query
-  [relationships nodes]
-  (loop [rels relationships
-         nodes (set nodes)
-         withs #{}
-         query nil]
-    (if (empty? rels)
-      query
-      (let [{:keys [from to] :as rel} (first rels)
-            [from-node [from-node-cypher from-where-cypher]] (node-reference nodes from)
-            [to-node [to-node-cypher to-where-cypher]] (node-reference nodes to)]
-        (recur (rest rels)
-               (remove #{from-node to-node} nodes)
-               (disj (conj withs (:ref-id from) (:ref-id to) (:ref-id rel)) nil)
-               (str (when query
-                      (str query " WITH " (clojure.string/join "," withs) " "))
-                    (str "MATCH "
-                         (cypher/relationship from-node-cypher to-node-cypher rel)
-                         (when (or from-where-cypher to-where-cypher)
-                           (str " WHERE " (clojure.string/join " AND " (remove nil? [from-where-cypher to-where-cypher])))))))))))
+  [rels]
+  (let [grouped-relations (group-by #(not= :not-exists (:operator %)) rels)
+        exists-rels (get grouped-relations true)
+        not-exists-rels (get grouped-relations false)]
+    (loop [remaining-rels exists-rels
+           known-ref-ids #{}
+           ends-with-where? false
+           query nil]
+      (if (empty? remaining-rels)
+        (str query
+             (if ends-with-where? " AND " " WHERE ")
+             (str/join " AND "
+                       (map #(non-existing-relationship-query % known-ref-ids) not-exists-rels)))
+        (let [{:keys [from to] :as rel} (first remaining-rels)
+              [from-node-cypher from-where-cypher] (node-reference known-ref-ids from)
+              [to-node-cypher to-where-cypher] (node-reference known-ref-ids to)]
+          (recur (rest remaining-rels)
+                 (disj (conj known-ref-ids (:ref-id from) (:ref-id to) (:ref-id rel)) nil)
+                 (or from-where-cypher to-where-cypher)
+                 (str (when query
+                        (str query " WITH " (str/join "," known-ref-ids) " "))
+                      (str "MATCH "
+                           (cypher/relationship from-node-cypher to-node-cypher rel)
+                           (when (or from-where-cypher to-where-cypher)
+                             (str " WHERE " (str/join " AND " (remove nil? [from-where-cypher to-where-cypher]))))))))))))
 
 (defn get-return-ref-ids
   "Takes a list or vector of entity representatios or ref-ids and returns a list of ref-ids"
@@ -96,8 +109,8 @@
 (defn get-graph-query
   "Takes a graph representation and fetches the nodes and relationship defined
   and returns any aliases specified in the representation"
-  [{:keys [nodes relationships returns]}]
-  (str (lookup-graph-query relationships nodes)
+  [{:keys [relationships returns]}]
+  (str (lookup-graph-query relationships)
        (when-not (empty? returns)
          (str " RETURN " (str/join "," (get-return-ref-ids returns))))))
 

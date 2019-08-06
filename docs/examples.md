@@ -276,8 +276,6 @@ The `returns` key specifies a vector of `ref-id` from the other three keys to re
 
 To make it easier to fetch nodes and relationships, we have made a function to do it all in one single call.
 
-The `nodes` key specifies a vector of [lookup representations](representations.md#lookup) of node to get from the database.
-
 The `relatioships` key specifies a vector of [relationship representations](representations.md#relationship) which needs to exists between the nodes to match.
 
 The `returns` key specifies a vector of `ref-id` from the other two keys to return as the result of the call.
@@ -285,9 +283,39 @@ The `returns` key specifies a vector of `ref-id` from the other two keys to retu
 ~~~clojure
 (client/get-graph
   conn
-  {:nodes         [{:ref-id "c" :labels [:city]}
-                   {:ref-id "p" :labels [:person] :props {:first-name "Neo"}}]
-   :relationships [{:ref-id "r" :type :lives-in :from {:ref-id "p"} :to {:ref-id "c"}}]
+  {:relationships [{:ref-id "r"
+                    :type :lives-in
+                    :from {:ref-id "p" :labels [:person] :props {:first-name "Neo"}}
+                    :to {:ref-id "c" :labels [:city]}}]
+   :returns       ["c" "p" "r"]})
+~~~
+
+#### Using operators for relationships
+
+To make more advanced graph specifications to fetch from Neo4j, we have support for simple operators. These exists in the namespace `neo4clj.operator`
+
+Notice that relationship representations with the `not-exists` operator doen't require the `ref-id` key and if no operator is used `exists` will be used by default.
+
+In this example we are looking for persons with the first name "Neo" currently living in "New York", but is not born there
+
+~~~clojure
+(require '[neo4clj.operator :as op])
+
+(def person {:ref-id "p" :labels [:person] :props {:first-name "Neo"}})
+
+(def city {:ref-id "c" :labels [:city] :props {:city "New York"}})
+
+(client/get-graph
+  conn
+  {:relationships [(op/exists
+                     {:ref-id "r"
+                      :type :lives-in
+                      :from person
+                      :to city})
+                   (op/not-exists
+                     {:type :born-in
+                      :from person
+                      :to city})]
    :returns       ["c" "p" "r"]})
 ~~~
 
