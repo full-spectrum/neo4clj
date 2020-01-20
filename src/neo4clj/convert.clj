@@ -67,6 +67,7 @@
     (nil? value) "NULL"
     (boolean? value) (str/upper-case value)
     (keyword? value) (str "'" (name value) "'")
+    (set? value) (str "[" (str/join ", " (map clj-value->neo4j-value (vec value))) "]")
     (instance? clojure.lang.IPersistentStack value) (str "[" (str/join ", " (map clj-value->neo4j-value value)) "]")
     (instance? java.time.Instant value) (str "'" (t/format :iso-instant value) "'")
     :else value))
