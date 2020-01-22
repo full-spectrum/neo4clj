@@ -28,12 +28,16 @@
           search-node (assoc node :props [{:number "12345678"} {:number "87654321"}])]
       (t/are [expected-cypher entity return?]
           (= expected-cypher (sut/lookup-query entity return?))
-        "MATCH (G__123) WHERE ID(G__123) = 4" (assoc node :id 4) false
-        "MATCH (G__123) WHERE ID(G__123) = 4 RETURN G__123" (assoc node :id 4) true
+        "MATCH (G__123) WHERE ID(G__123) = 4" {:ref-id "G__123" :id 4} false
+        "MATCH (G__123) WHERE ID(G__123) = 4 RETURN G__123" {:ref-id "G__123" :id 4} true
         "MATCH (G__123:Label2:Label1 {a: '1', b: '2'})" node false
         "MATCH (G__123:Label2:Label1 {a: '1', b: '2'}) RETURN G__123" node true
-        "MATCH (G__123:Label2:Label1) WHERE G__123.number = '12345678' OR G__123.number = '87654321'" search-node false
-        "MATCH (G__123:Label2:Label1) WHERE G__123.number = '12345678' OR G__123.number = '87654321' RETURN G__123" search-node true))))
+        "MATCH (G__123:Label2:Label1 {a: '1', b: '2'}) WHERE ID(G__123) = 4" (assoc node :id 4) false
+        "MATCH (G__123:Label2:Label1 {a: '1', b: '2'}) WHERE ID(G__123) = 4 RETURN G__123" (assoc node :id 4) true
+        "MATCH (G__123:Label2:Label1) WHERE (G__123.number = '12345678' OR G__123.number = '87654321')" search-node false
+        "MATCH (G__123:Label2:Label1) WHERE (G__123.number = '12345678' OR G__123.number = '87654321') RETURN G__123" search-node true
+        "MATCH (G__123:Label2:Label1) WHERE ID(G__123) = 4 AND (G__123.number = '12345678' OR G__123.number = '87654321')" (assoc search-node :id 4) false
+        "MATCH (G__123:Label2:Label1) WHERE ID(G__123) = 4 AND (G__123.number = '12345678' OR G__123.number = '87654321') RETURN G__123" (assoc search-node :id 4) true))))
 
 (t/deftest index-query
   (t/testing "Cypher to create/delete a index"
@@ -77,8 +81,8 @@
             "MATCH (G__1) WHERE ID(G__1) = 1 MATCH (G__2) WHERE ID(G__2) = 2 CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__2) RETURN r" by-id-rel true
             "MATCH (G__1:Phone:Fragment {b: 2}) MATCH (G__2:Address:Fragment {c: '6'}) CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__2)" by-lookup-rel false
             "MATCH (G__1:Phone:Fragment {b: 2}) MATCH (G__2:Address:Fragment {c: '6'}) CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__2) RETURN r" by-lookup-rel true
-            "MATCH (G__1:Phone:Fragment) WHERE G__1.b = 2 OR G__1.b = 5 CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__123)" by-combined-rel false
-            "MATCH (G__1:Phone:Fragment) WHERE G__1.b = 2 OR G__1.b = 5 CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__123) RETURN r" by-combined-rel true))))))
+            "MATCH (G__1:Phone:Fragment) WHERE (G__1.b = 2 OR G__1.b = 5) CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__123)" by-combined-rel false
+            "MATCH (G__1:Phone:Fragment) WHERE (G__1.b = 2 OR G__1.b = 5) CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__123) RETURN r" by-combined-rel true))))))
 
 (t/deftest node-reference
   (t/testing "Cypher to lookup or reference a already lookded up node"

@@ -70,10 +70,12 @@
   The return value is an vector with the first part being the actual entity and
   the second is the where clause for the lookup."
   [{:keys [id ref-id props] :as lookup}]
-  (if id
-    [(str "(" ref-id ")")
-     (str "ID(" ref-id ") = " id)]
-    [(str "(" ref-id (labels (:labels lookup))
-          (when (map? props) (properties props))
-          ")")
-     (when (and props (not (map? props))) (where ref-id props))]))
+  (vector (str "(" ref-id (labels (:labels lookup))
+               (when (map? props) (properties props))
+               ")")
+          (when-let [where-parts (not-empty
+                                  (remove nil? [(when id
+                                                  (str "ID(" ref-id ") = " id))
+                                                (when (and props (not (map? props)))
+                                                  (str "(" (where ref-id props) ")"))]))]
+            (str/join " AND " where-parts))))

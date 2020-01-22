@@ -73,14 +73,15 @@
     (are [cypher-parts lookup]
         (= cypher-parts (sut/lookup lookup))
       ["(n)" nil] {:ref-id "n"}
+      ["(n)" "ID(n) = 12"] {:ref-id "n" :id 12}
       ["(p:Person)" nil] {:ref-id "p" :labels [:person]}
       ["(c:Person:Customer)" nil] {:ref-id "c" :labels [:customer :person]}
       ["(c:Person:Customer {firstName: 'Neo', lastName: 'Anderson'})" nil] {:ref-id "c"
                                                                             :labels [:customer :person]
                                                                             :props {:first-name "Neo"
                                                                                     :last_name "Anderson"}}
-      ["(c:Person:Customer)" "c.firstName = 'Neo' OR c.lastName = 'Anderson'"] {:ref-id "c"
-                                                                                :labels [:customer :person]
-                                                                                :props [{:first-name "Neo"}
-                                                                                        {:last_name "Anderson"}]}
-      ["(c)" "ID(c) = 12"] {:ref-id "c" :labels [:customer :person] :id 12})))
+      ["(c:Person:Customer)" "(c.firstName = 'Neo' OR c.lastName = 'Anderson')"] {:ref-id "c"
+                                                                                  :labels [:customer :person]
+                                                                                  :props [{:first-name "Neo"}
+                                                                                          {:last_name "Anderson"}]}
+      ["(c:Person:Customer)" "ID(c) = 12"] {:ref-id "c" :labels [:customer :person] :id 12})))
