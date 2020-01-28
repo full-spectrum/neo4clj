@@ -56,6 +56,10 @@
        (map (fn [^Record r] (.asMap r)))
        (map #(reduce (fn [m [k v]] (assoc m k (neo4j->clj v))) {} %))))
 
+(defmethod neo4j->clj java.lang.Long
+  [entity]
+  entity)
+
 (defn clj-value->neo4j-value
   "Convert a given clojure primitive into its bolt query equivalent
   If given a vector or list, all elements within needs to be of the same type.
