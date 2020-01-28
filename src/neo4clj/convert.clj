@@ -60,6 +60,10 @@
   [entity]
   entity)
 
+(defmethod neo4j->clj java.util.Collections$UnmodifiableMap
+  [entity]
+  (into {} entity))
+
 (defn clj-value->neo4j-value
   "Convert a given clojure primitive into its bolt query equivalent
   If given a vector or list, all elements within needs to be of the same type.
