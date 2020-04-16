@@ -1,8 +1,11 @@
 (ns neo4clj.java-interop
   (:require [neo4clj.convert :as convert])
   (:import [org.neo4j.driver.internal.logging ConsoleLogging]
-           [org.neo4j.driver.v1 AuthTokens Config Config$EncryptionLevel Driver
-                                GraphDatabase StatementRunner]
+           [org.neo4j.driver AuthTokens
+                             Config
+                             Driver
+                             GraphDatabase
+                             QueryRunner]
            [java.util Map]
            [java.util.logging Level]))
 
@@ -22,13 +25,15 @@
   :encryption [:required :none] - defaults to :required"
   ^Config [^clojure.lang.IPersistentMap opts]
   (let [log-level (get-in opts [:log :level] :warn)
-        encryption-level (if (= (:encryption opts) :none)
-                           Config$EncryptionLevel/NONE
-                           Config$EncryptionLevel/REQUIRED)]
-    (.. (Config/build)
-        (withLogging (ConsoleLogging. (get log-level-mapping log-level)))
-        (withEncryptionLevel encryption-level)
-        toConfig)))
+        encryption-level (:encryption opts)]
+    (if (= encryption-level :required)
+      (.. (Config/builder)
+          (withLogging (ConsoleLogging. (get log-level-mapping log-level)))
+          (withEncryption)
+          build)
+      (.. (Config/builder)
+          (withLogging (ConsoleLogging. (get log-level-mapping log-level)))
+          build))))
 
 (defn connect
   "Create a new Neo4J connection to the given url, with optional credentials and configuration"
@@ -43,7 +48,7 @@
 
 (defn execute
   "Runs the given query with optional parameters on the given Neo4J session/transaction"
-  ([^StatementRunner runner ^String query]
+  ([^QueryRunner runner ^String query]
    (execute runner query {}))
-  ([^StatementRunner runner ^String query ^Map params]
+  ([^QueryRunner runner ^String query ^Map params]
    (convert/neo4j->clj (.run runner query (convert/clj-parameters->neo4j params)))))

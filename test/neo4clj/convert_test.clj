@@ -5,7 +5,7 @@
 
 (def neo4j-node
   "Mock object to represent a Neo4J Node"
-  (proxy [org.neo4j.driver.v1.types.Node] []
+  (proxy [org.neo4j.driver.types.Node] []
     (id [] 1)
     (labels [] ["Person"])
     (asMap [] {"firstName" "Neo"
@@ -13,7 +13,7 @@
 
 (def neo4j-relationship
   "Mock object to represent a Neo4J Relationship"
-  (proxy [org.neo4j.driver.v1.types.Relationship] []
+  (proxy [org.neo4j.driver.types.Relationship] []
     (id [] 4)
     (type [] "EMPLOYEE")
     (startNodeId [] 4)
@@ -23,16 +23,16 @@
 
 (def neo4j-record
   "Mock object to represent a Neo4J Record containing tow Nodes"
-  (proxy [org.neo4j.driver.v1.Record] []
+  (proxy [org.neo4j.driver.Record] []
     (asMap [] {"n" neo4j-node "r" neo4j-relationship})))
 
 (def statement-result
-  "Atom used for the iterator functionality of StatementResult below"
+  "Atom used for the iterator functionality of Result below"
   (atom nil))
 
 (def neo4j-statement-result
-  "Mock object to represent a Neo4J StatementResult"
-  (proxy [org.neo4j.driver.v1.StatementResult] []
+  "Mock object to represent a Neo4J Result"
+  (proxy [org.neo4j.driver.Result] []
     (hasNext [] (not (empty? @statement-result)))
     (next [] (let [v (first @statement-result)]
                (swap! statement-result pop)
