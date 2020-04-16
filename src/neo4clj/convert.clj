@@ -50,6 +50,10 @@
          :start-id (.startNodeId rel)
          :end-id (.endNodeId rel)))
 
+(defmethod neo4j->clj String
+  [^String item]
+  item)
+
 (defmethod neo4j->clj StatementResult
   [^StatementResult result]
   (->> (iterator-seq result)
