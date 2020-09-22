@@ -62,6 +62,11 @@
     (t/are [clj-representation neo4j-entity]
         (do (reset! statement-result [neo4j-record])
             (= clj-representation (sut/neo4j->clj neo4j-entity)))
+      "Anderson" (java.lang.String. "Anderson")
+      123456789 (java.lang.Long. 123456789)
+      {"a" 1 "b" 2} (java.util.Collections/unmodifiableMap (doto (java.util.Hashtable. )
+                                                             (.put "a" 1)
+                                                             (.put "b" 2)))
       {:id 1 :labels [:person] :props {:first-name "Neo" :last-name "Anderson"}} neo4j-node
       {:id 4 :type :employee :start-id 4 :end-id 11 :props {:hired-at 2008 :position "Technician"}} neo4j-relationship
       '({"n" {:id 1 :labels [:person] :props {:first-name "Neo" :last-name "Anderson"}}

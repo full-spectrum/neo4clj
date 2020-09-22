@@ -38,6 +38,18 @@
   [entity]
   nil)
 
+(defmethod neo4j->clj java.lang.String
+  [^java.lang.String entity]
+  entity)
+
+(defmethod neo4j->clj java.lang.Long
+  [^java.lang.Long entity]
+  entity)
+
+(defmethod neo4j->clj java.util.Collections$UnmodifiableMap
+  [entity]
+  (into {} entity))
+
 (defmethod neo4j->clj Node
   [^Node node]
   (assoc (neo4j-entity-basics->clj node)
@@ -55,14 +67,6 @@
   (->> (iterator-seq result)
        (map (fn [^Record r] (.asMap r)))
        (map #(reduce (fn [m [k v]] (assoc m k (neo4j->clj v))) {} %))))
-
-(defmethod neo4j->clj java.lang.Long
-  [entity]
-  entity)
-
-(defmethod neo4j->clj java.util.Collections$UnmodifiableMap
-  [entity]
-  (into {} entity))
 
 (defn clj-value->neo4j-value
   "Convert a given clojure primitive into its bolt query equivalent
