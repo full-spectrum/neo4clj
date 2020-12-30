@@ -20,24 +20,49 @@
         "CREATE (G__123:Label1 {a: '1'})" node-complete false
         "CREATE (G__123:Label1 {a: '1'}) RETURN G__123" node-complete true))))
 
-(t/deftest lookup-query
-  (t/testing "Cypher for lookup query"
+(t/deftest lookup-node
+  (t/testing "Cypher for lookup node query"
     (let [node {:ref-id "G__123"
                 :labels [:label1 :label2]
                 :props {:a "1" :b "2"}}
           search-node (assoc node :props [{:number "12345678"} {:number "87654321"}])]
       (t/are [expected-cypher entity return?]
-          (= expected-cypher (sut/lookup-query entity return?))
+          (= expected-cypher (sut/lookup-node entity return?))
         "MATCH (G__123) WHERE ID(G__123) = 4" {:ref-id "G__123" :id 4} false
         "MATCH (G__123) WHERE ID(G__123) = 4 RETURN G__123" {:ref-id "G__123" :id 4} true
         "MATCH (G__123:Label2:Label1 {a: '1', b: '2'})" node false
         "MATCH (G__123:Label2:Label1 {a: '1', b: '2'}) RETURN G__123" node true
         "MATCH (G__123:Label2:Label1 {a: '1', b: '2'}) WHERE ID(G__123) = 4" (assoc node :id 4) false
         "MATCH (G__123:Label2:Label1 {a: '1', b: '2'}) WHERE ID(G__123) = 4 RETURN G__123" (assoc node :id 4) true
-        "MATCH (G__123:Label2:Label1) WHERE (G__123.number = '12345678' OR G__123.number = '87654321')" search-node false
-        "MATCH (G__123:Label2:Label1) WHERE (G__123.number = '12345678' OR G__123.number = '87654321') RETURN G__123" search-node true
-        "MATCH (G__123:Label2:Label1) WHERE ID(G__123) = 4 AND (G__123.number = '12345678' OR G__123.number = '87654321')" (assoc search-node :id 4) false
-        "MATCH (G__123:Label2:Label1) WHERE ID(G__123) = 4 AND (G__123.number = '12345678' OR G__123.number = '87654321') RETURN G__123" (assoc search-node :id 4) true))))
+        "MATCH (G__123:Label2:Label1) WHERE ((G__123.number = '12345678') OR (G__123.number = '87654321'))" search-node false
+        "MATCH (G__123:Label2:Label1) WHERE ((G__123.number = '12345678') OR (G__123.number = '87654321')) RETURN G__123" search-node true
+        "MATCH (G__123:Label2:Label1) WHERE ID(G__123) = 4" (assoc search-node :id 4) false
+        "MATCH (G__123:Label2:Label1) WHERE ID(G__123) = 4 RETURN G__123" (assoc search-node :id 4) true))))
+
+(t/deftest lookup-relationship
+  (t/testing "Cypher for lookup relationship query"
+    (let [rel-base {:ref-id "G__234" :from {:ref-id "G__123"} :to {:ref-id "G__345"}}
+          rel-full (assoc rel-base :id 4 :type :enemy :props {:a 2 :b 4})
+          rel-nodes {:ref-id "G__234" :from {:ref-id "G__123" :id 24} :to {:ref-id "G__345" :props {:a 1 :b 2}}}]
+      (t/are [expected-cypher entity return?]
+          (= expected-cypher (sut/lookup-relationship entity return?))
+        "MATCH (G__123)-[G__234]->(G__345)" rel-base false
+        "MATCH (G__123)-[G__234]->(G__345) RETURN G__234" rel-base true
+        "MATCH (G__123)-[G__234:ENEMY]->(G__345)" (assoc rel-base :type :enemy) false
+        "MATCH (G__123)-[G__234:ENEMY]->(G__345) RETURN G__234" (assoc rel-base :type :enemy) true
+        "MATCH (G__123)-[G__234]->(G__345) WHERE ID(G__234) = 4" (assoc rel-base :id 4) false
+        "MATCH (G__123)-[G__234]->(G__345) WHERE ID(G__234) = 4 RETURN G__234" (assoc rel-base :id 4) true
+        "MATCH (G__123)-[G__234:ENEMY]->(G__345) WHERE ID(G__234) = 4" (assoc rel-base :id 4 :type :enemy) false
+        "MATCH (G__123)-[G__234:ENEMY]->(G__345) WHERE ID(G__234) = 4 RETURN G__234" (assoc rel-base :id 4 :type :enemy) true
+        "MATCH (G__123)-[G__234 {a: 2, b: 4}]->(G__345) WHERE ID(G__234) = 4" (dissoc rel-full :type) false
+        "MATCH (G__123)-[G__234 {a: 2, b: 4}]->(G__345) WHERE ID(G__234) = 4 RETURN G__234" (dissoc rel-full :type) true
+        "MATCH (G__123)-[G__234:ENEMY {a: 2, b: 4}]->(G__345)" (dissoc rel-full :id) false
+        "MATCH (G__123)-[G__234:ENEMY {a: 2, b: 4}]->(G__345) RETURN G__234" (dissoc rel-full :id) true
+        "MATCH (G__123)-[G__234]->(G__345 {a: 1, b: 2}) WHERE ID(G__123) = 24" rel-nodes false
+        "MATCH (G__123)-[G__234]->(G__345 {a: 1, b: 2}) WHERE ID(G__123) = 24 RETURN G__234" rel-nodes true
+        "MATCH (G__123)-[G__234:ENEMY]->(G__345 {a: 1, b: 2}) WHERE ID(G__234) = 4 AND ID(G__123) = 24" (assoc rel-nodes :type :enemy :id 4) false
+        "MATCH (G__123)-[G__234:ENEMY]->(G__345 {a: 1, b: 2}) WHERE ID(G__234) = 4 AND ID(G__123) = 24 RETURN G__234" (assoc rel-nodes :type :enemy :id 4) true))))
+
 
 (t/deftest index-query
   (t/testing "Cypher to create/delete a index"
@@ -81,8 +106,8 @@
             "MATCH (G__1) WHERE ID(G__1) = 1 MATCH (G__2) WHERE ID(G__2) = 2 CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__2) RETURN r" by-id-rel true
             "MATCH (G__1:Phone:Fragment {b: 2}) MATCH (G__2:Address:Fragment {c: '6'}) CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__2)" by-lookup-rel false
             "MATCH (G__1:Phone:Fragment {b: 2}) MATCH (G__2:Address:Fragment {c: '6'}) CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__2) RETURN r" by-lookup-rel true
-            "MATCH (G__1:Phone:Fragment) WHERE (G__1.b = 2 OR G__1.b = 5) CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__123)" by-combined-rel false
-            "MATCH (G__1:Phone:Fragment) WHERE (G__1.b = 2 OR G__1.b = 5) CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__123) RETURN r" by-combined-rel true))))))
+            "MATCH (G__1:Phone:Fragment) WHERE ((G__1.b = 2) OR (G__1.b = 5)) CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__123)" by-combined-rel false
+            "MATCH (G__1:Phone:Fragment) WHERE ((G__1.b = 2) OR (G__1.b = 5)) CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__123) RETURN r" by-combined-rel true))))))
 
 (t/deftest node-reference
   (t/testing "Cypher to lookup or reference a already lookded up node"

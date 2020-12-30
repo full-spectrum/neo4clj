@@ -8,18 +8,34 @@
   [{:keys [ref-id] :as node} return?]
   (str "CREATE " (cypher/node node) (when return? (str " RETURN " ref-id))))
 
-(defn lookup-query
+(defn lookup
   "Takes a lookup representation and generates a bolt query
 
   A lookup representation needs the :reference.id to be set and
   either the :id or :labels and :props keys"
-  [{:keys [ref-id] :as lookup} return?]
-  (let [cypher-lookup (cypher/lookup lookup)]
+  [entity-fn {:keys [ref-id] :as entity} return?]
+  (let [[base-cypher where-cypher] (entity-fn entity)]
     (str "MATCH "
-         (str (first cypher-lookup)
-              (when (second cypher-lookup)
-                (str " WHERE " (second cypher-lookup))))
+         (str base-cypher
+              (when where-cypher
+                (str " WHERE " where-cypher)))
          (when return? (str " RETURN " ref-id)))))
+
+(defn lookup-node
+  "Takes a node lookup representation and generates a bolt query
+
+  A node lookup representation needs the :ref-id to be set and
+  at least one of the keys :id, :labels or :props"
+  [node return?]
+  (lookup cypher/lookup-node node return?))
+
+(defn lookup-relationship
+  "Takes a relation lookup representation and generates a bolt query
+
+  A lookup representation needs the :reference-id, :from and :to keys to be set and
+  can take the optional :id, :type and :props keys"
+  [relationship return?]
+  (lookup cypher/lookup-relationship relationship return?))
 
 (defn index-query
   "Creates a query to modify index, allowed operations are: CREATE, DROP"
@@ -30,7 +46,7 @@
 (defn lookup-non-referred-node [ref-id node]
   "Creates a query to lookup a node without a ref-id and refers it as given ref-id"
   (when-not (:ref-id node)
-    (str (lookup-query
+    (str (lookup-node
           (assoc node :ref-id ref-id)
           false)
          " ")))
@@ -51,7 +67,7 @@
   [known-ref-ids {:keys [ref-id] :as node}]
   (if (known-ref-ids ref-id)
     [(str "(" ref-id ")") nil]
-    (cypher/lookup node)))
+    (cypher/lookup-node node)))
 
 (defn non-existing-relationship-query
   "Returns the bolt query where part to test that the given relationship doesn't exists"
@@ -74,7 +90,6 @@
            query nil]
       (if (empty? remaining-rels)
         (str query
-             (if ends-with-where? " AND " " WHERE ")
              (str/join " AND "
                        (map #(non-existing-relationship-query % known-ref-ids) not-exists-rels)))
         (let [{:keys [from to] :as rel} (first remaining-rels)
@@ -85,10 +100,7 @@
                  (or from-where-cypher to-where-cypher)
                  (str (when query
                         (str query " WITH " (str/join "," known-ref-ids) " "))
-                      (str "MATCH "
-                           (cypher/relationship from-node-cypher to-node-cypher rel)
-                           (when (or from-where-cypher to-where-cypher)
-                             (str " WHERE " (str/join " AND " (remove nil? [from-where-cypher to-where-cypher]))))))))))))
+                      (lookup-relationship rel false))))))))
 
 (defn get-return-ref-ids
   "Takes a list or vector of entity representatios or ref-ids and returns a list of ref-ids"
@@ -100,7 +112,7 @@
   and returns any aliases specified in the representation"
   [{:keys [lookups nodes relationships returns]}]
   (str/join " " (concat
-                 (map #(lookup-query % false) lookups)
+                 (map #(lookup-node % false) lookups)
                  (map #(create-node-query % false) nodes)
                  (map #(create-relationship-query % false) relationships)
                  (when-not (empty? returns)
@@ -120,7 +132,7 @@
 
   Allowed operations are: SET, REMOVE"
   [operation {:keys [ref-id] :or {ref-id "n"} :as node} labels]
-  (str (lookup-query (assoc node :ref-id ref-id) false) " "
+  (str (lookup-node (assoc node :ref-id ref-id) false) " "
        operation " " ref-id (cypher/labels labels)))
 
 (defn modify-properties-query
@@ -128,10 +140,10 @@
 
   Allowed operations are: =, +="
   [operation {:keys [ref-id] :or {ref-id "e"} :as entity} props]
-  (str (lookup-query (assoc entity :ref-id ref-id) false) " SET "
+  (str (lookup-node (assoc entity :ref-id ref-id) false) " SET "
        ref-id " " operation (cypher/properties props)))
 
 (defn delete-query
   "Takes a neo4j entity representation and deletes it"
   [{:keys [ref-id] :or {ref-id "e"} :as entity}]
-  (str (lookup-query (assoc entity :ref-id ref-id) false) " DELETE " ref-id))
+  (str (lookup-node (assoc entity :ref-id ref-id) false) " DELETE " ref-id))
