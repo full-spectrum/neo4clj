@@ -171,7 +171,17 @@ The keys `from` and `to` are Lookup representations. To learn more about the Clo
 
 ### Find relationships in Neo4j
 
-To fetch relationships from the Neo4j database, please refer to the section [Get Graph](#get-graph)
+The keys `from` and `to` are Lookup representations. To learn more about the Clojure representation of a lookup entry please see our [representations](representations.md) page
+
+~~~clojure
+(client/find-relationship! conn {:ref-id "p"
+                                 :type :employee
+                                 :from {:labels [:person] :props {:first-name "Neo"}}
+                                 :to {:id 12}
+                                 :props {:position "Developer"}})
+~~~
+
+Only `ref-id`, `to` and `from` are required keys in the relationship representation for finding relationships.
 
 ### Update and Delete Relationship
 

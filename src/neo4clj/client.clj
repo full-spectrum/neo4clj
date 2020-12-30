@@ -113,7 +113,12 @@
 (defn find-nodes!
   [conn ^clojure.lang.APersistentMap node]
   (map #(get % (:ref-id node))
-       (execute! conn (builder/lookup-query node true))))
+       (execute! conn (builder/lookup-node node true))))
+
+(defn find-relationships!
+  [conn ^clojure.lang.APersistentMap rel]
+  (map #(get % (:ref-id rel))
+       (execute! conn (builder/lookup-relationship rel true))))
 
 (defn create-graph!
   "Optimized function to create a whole graph within a transaction
@@ -132,7 +137,7 @@
   Format of the graph is:
   :nodes - collection of neo4j node representations
   :relationships  - collection of neo4j relationship representations
-  :return-aliases - collection of aliases to return from query
+  :returns - collection of aliases to return from query
   :unique-by - reference-id to use for creating a list of distinct nodes"
   [conn ^clojure.lang.APersistentMap graph]
   (execute! conn (builder/get-graph-query graph)))
