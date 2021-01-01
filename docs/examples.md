@@ -220,7 +220,7 @@ It will update an existing properties map based on the following rules.
 * Keys existing in both property maps are updated with values from the given property map
 
 ~~~clojure
-(client/update-props! conn {:labels [:person] :first-name "Thomas"} {:first-name "Neo"})
+(client/update-props! conn {:labels [:person] :props {:first-name "Thomas" :first-name "Neo"}})
 ~~~
 
 #### Replace properties
@@ -228,7 +228,7 @@ It will update an existing properties map based on the following rules.
 This function takes a connection, a lookup representation and the property map to replace the property map on matched entities with.
 
 ~~~clojure
-(client/replace-props! conn {:labels [:person] :first-name "Thomas"} {:last-name-only "Anderson"})
+(client/replace-props! conn {:labels [:person] :props {:first-name "Thomas" :last-name-only "Anderson"}})
 ~~~
 
 So in the example we find all nodes with label `:person` and the property key value pair `:first-name "Thomas"` and replace the
@@ -243,7 +243,7 @@ Notice: You need to ensure you have deleted all relatiohsips to a node before yo
 To learn more about the Clojure representation of a lookup entry please see our [representations](representations.md) page
 
 ~~~clojure
-(client/delete! conn {:labels [:person] :first-name "Neo"})
+(client/delete! conn {:labels [:person] :props {:first-name "Neo"}})
 ~~~
 
 
