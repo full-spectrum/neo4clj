@@ -27,8 +27,8 @@ Add the following dependency to `project.clj`:
   connection
   {:ref-id "N"
    :labels [:person]
-   :properties {:first-name "Thomas"
-                :last-name "Anderson"}})
+   :props {:first-name "Thomas"
+           :last-name "Anderson"}})
 
 ;; Close the connection to the Neo4J server
 (client/disconnect connection)
