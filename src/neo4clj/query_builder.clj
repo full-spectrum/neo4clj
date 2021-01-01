@@ -12,7 +12,7 @@
   "Takes a lookup representation and generates a bolt query
 
   A lookup representation needs the :reference.id to be set and
-  either the :id or :labels and :properties keys"
+  either the :id or :labels and :props keys"
   [{:keys [ref-id] :as lookup} return?]
   (let [cypher-lookup (cypher/lookup lookup)]
     (str "MATCH "
