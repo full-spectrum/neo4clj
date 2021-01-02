@@ -23,21 +23,13 @@
 (t/deftest lookup-node
   (t/testing "Cypher for lookup node query"
     (let [node {:ref-id "G__123"
+                :id 4
                 :labels [:label1 :label2]
-                :props {:a "1" :b "2"}}
-          search-node (assoc node :props [{:number "12345678"} {:number "87654321"}])]
+                :props {:a "1" :b "2"}}]
       (t/are [expected-cypher entity return?]
           (= expected-cypher (sut/lookup-node entity return?))
-        "MATCH (G__123) WHERE ID(G__123) = 4" {:ref-id "G__123" :id 4} false
-        "MATCH (G__123) WHERE ID(G__123) = 4 RETURN G__123" {:ref-id "G__123" :id 4} true
-        "MATCH (G__123:Label2:Label1 {a: '1', b: '2'})" node false
-        "MATCH (G__123:Label2:Label1 {a: '1', b: '2'}) RETURN G__123" node true
-        "MATCH (G__123:Label2:Label1 {a: '1', b: '2'}) WHERE ID(G__123) = 4" (assoc node :id 4) false
-        "MATCH (G__123:Label2:Label1 {a: '1', b: '2'}) WHERE ID(G__123) = 4 RETURN G__123" (assoc node :id 4) true
-        "MATCH (G__123:Label2:Label1) WHERE ((G__123.number = '12345678') OR (G__123.number = '87654321'))" search-node false
-        "MATCH (G__123:Label2:Label1) WHERE ((G__123.number = '12345678') OR (G__123.number = '87654321')) RETURN G__123" search-node true
-        "MATCH (G__123:Label2:Label1) WHERE ID(G__123) = 4" (assoc search-node :id 4) false
-        "MATCH (G__123:Label2:Label1) WHERE ID(G__123) = 4 RETURN G__123" (assoc search-node :id 4) true))))
+        "MATCH (G__123:Label2:Label1) WHERE ID(G__123) = 4" node false
+        "MATCH (G__123:Label2:Label1) WHERE ID(G__123) = 4 RETURN G__123" (assoc node :id 4) true))))
 
 (t/deftest lookup-relationship
   (t/testing "Cypher for lookup relationship query"
@@ -62,6 +54,8 @@
         "MATCH (G__123)-[G__234]->(G__345 {a: 1, b: 2}) WHERE ID(G__123) = 24 RETURN G__234" rel-nodes true
         "MATCH (G__123)-[G__234:ENEMY]->(G__345 {a: 1, b: 2}) WHERE ID(G__234) = 4 AND ID(G__123) = 24" (assoc rel-nodes :type :enemy :id 4) false
         "MATCH (G__123)-[G__234:ENEMY]->(G__345 {a: 1, b: 2}) WHERE ID(G__234) = 4 AND ID(G__123) = 24 RETURN G__234" (assoc rel-nodes :type :enemy :id 4) true))))
+        "MATCH (G__123)-[G__234:ENEMY]->(G__345) WHERE ID(G__234) = 4" rel false
+        "MATCH (G__123)-[G__234:ENEMY]->(G__345) WHERE ID(G__234) = 4 RETURN G__234" rel true))))
 
 
 (t/deftest index-query

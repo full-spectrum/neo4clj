@@ -60,10 +60,10 @@
 
 (defn relationship
   "Takes a relationship representation and returns its cypher equivalent"
-  [from to {:keys [ref-id type props]}]
+  [from to {:keys [ref-id id type props]}]
   (str from "-[" ref-id
        (when type (str ":" (sanitize/cypher-relation-type type)))
-       (when props (properties props))
+       (when (and (not id) (map? props)) (properties props))
        "]->" to ))
 
 (defn lookup-where
@@ -79,11 +79,13 @@
   The return value is an vector with the first part being the actual entity and
   the second is the where clause for the lookup."
   [{:keys [ref-id id props] :as lookup}]
-  (vector (str "(" ref-id (labels (:labels lookup))
-               (when (map? props) (properties props))
-               ")")
-          (when (or id (not (map? props)))
-            (lookup-where lookup))))
+  (let [req-where (or id (not (map? props)))]
+    (vector (str "(" ref-id (labels (:labels lookup))
+                 (when (not req-where)
+                   (properties props))
+                 ")")
+            (when req-where
+              (lookup-where lookup)))))
 
 (defn lookup-relationship
   "Takes a relationship lookup representation and returns its cypher equvalent
