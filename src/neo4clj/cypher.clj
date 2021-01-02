@@ -70,8 +70,7 @@
   [{:keys [ref-id id props]}]
   (cond
     id (str "ID(" ref-id ") = " id)
-    props (where ref-id props)
-    :else nil))
+    props (where ref-id props)))
 
 (defn lookup-node
   "Takes a node lookup representation and returns its cypher equvalent
@@ -96,9 +95,11 @@
   (let [[from-cypher from-cypher-where] (lookup-node from)
         [to-cypher to-cypher-where] (lookup-node to)]
     (vector (relationship from-cypher to-cypher rel)
-            (when-let [where-parts (not-empty (remove nil? (vector
-                                                            (when (or id (not (map? props)))
-                                                              (lookup-where rel))
-                                                            from-cypher-where
-                                                            to-cypher-where)))]
-              (str/join " AND " where-parts)))))
+            (->> (vector
+                  (when (or id (not (map? props)))
+                    (lookup-where rel))
+                  from-cypher-where
+                  to-cypher-where)
+                 (remove nil?)
+                 (str/join " AND ")
+                 (not-empty)))))
