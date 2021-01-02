@@ -66,7 +66,8 @@
       "(p:Person)-[:EMPLOYEE]->(c:Company)" {:type :employee}
       "(p:Person)-[r:FORMER_EMPLOYEE]->(c:Company)" {:ref-id "r" :type :former-employee}
       "(p:Person)-[r {hiredAt: 2008}]->(c:Company)" {:ref-id "r" :props {:hired-at 2008}}
-      "(p:Person)-[r:EMPLOYEE {hiredAt: 2008}]->(c:Company)" {:ref-id "r" :type :employee :props {:hired-at 2008}})))
+      "(p:Person)-[r:EMPLOYEE {hiredAt: 2008}]->(c:Company)" {:ref-id "r" :type :employee :props {:hired-at 2008}}
+      "(p:Person)-[r:EMPLOYEE]->(c:Company)" {:ref-id "r" :type :employee :props [{:hired-at 2008} {:hired-at 2012}]})))
 
 (deftest lookup-where
   (testing "Cypher representation of a where for a query"
@@ -84,21 +85,19 @@
 
 (deftest lookup-node
   (testing "Cypher representation of a Node lookup including where parts"
-    (are [cypher-parts lookup]
-        (= cypher-parts (sut/lookup-node lookup))
-      ["(n)" nil] {:ref-id "n"}
-      ["(n)" "ID(n) = 12"] {:ref-id "n" :id 12}
-      ["(p:Person)" nil] {:ref-id "p" :labels [:person]}
-      ["(c:Person:Customer)" nil] {:ref-id "c" :labels [:customer :person]}
-      ["(c:Person:Customer {firstName: 'Neo', lastName: 'Anderson'})" nil] {:ref-id "c"
-                                                                            :labels [:customer :person]
-                                                                            :props {:first-name "Neo"
-                                                                                    :last_name "Anderson"}}
-      ["(c:Person:Customer)" "((c.firstName = 'Neo') OR (c.lastName = 'Anderson'))"] {:ref-id "c"
-                                                                                  :labels [:customer :person]
-                                                                                  :props [{:first-name "Neo"}
-                                                                                          {:last_name "Anderson"}]}
-      ["(c:Person:Customer)" "ID(c) = 12"] {:ref-id "c" :labels [:customer :person] :id 12})))
+    (let [node {:ref-id "G__123" :labels [:customer :person] :props {:first-name "Neo" :last_name "Anderson"}}]
+      (are [cypher-parts lookup]
+          (= cypher-parts (sut/lookup-node lookup))
+        ["(G__123)" nil] {:ref-id "G__123"}
+        ["(G__123)" "ID(G__123) = 4"] {:ref-id "G__123" :id 4}
+        ["(G__123:Person)" nil] {:ref-id "G__123" :labels [:person]}
+        ["(G__123:Person:Customer)" nil] (dissoc node :props)
+        ["(G__123 {firstName: 'Neo', lastName: 'Anderson'})" nil] (dissoc node :labels)
+        ["(G__123:Person:Customer {firstName: 'Neo', lastName: 'Anderson'})" nil] node
+        ["(G__123:Person:Customer)" "((G__123.firstName = 'Neo') OR (G__123.lastName = 'Anderson'))"] (assoc node :props [{:first-name "Neo"}
+                                                                                                                {:last_name "Anderson"}])
+        ["(G__123:Person:Customer)" "((G__123.firstName = 'Neo' AND G__123.lastName = 'Anderson') OR (G__123.firstName = 'Agent' AND G__123.lastName = 'Smith'))"] (assoc node :props [{:first-name "Neo" :last_name "Anderson"} {:first-name "Agent" :last_name "Smith"}])
+        ["(G__123:Person:Customer)" "ID(G__123) = 4"] (assoc node :id 4)))))
 
 (deftest lookup-relationship
   (testing "Cypher representation of a Relationship lookup including where parts"
@@ -111,7 +110,8 @@
         ["(G__123)-[G__234:ENEMY]->(G__345)" nil] (assoc rel-base :type :enemy)
         ["(G__123)-[G__234]->(G__345)" "ID(G__234) = 4"] (assoc rel-base :id 4)
         ["(G__123)-[G__234:ENEMY]->(G__345)" "ID(G__234) = 4"] (assoc rel-base :id 4 :type :enemy)
-        ["(G__123)-[G__234 {a: 2, b: 4}]->(G__345)" "ID(G__234) = 4"] (dissoc rel-full :type)
+        ["(G__123)-[G__234]->(G__345)" "ID(G__234) = 4"] (dissoc rel-full :type)
         ["(G__123)-[G__234:ENEMY {a: 2, b: 4}]->(G__345)" nil] (dissoc rel-full :id)
+        ["(G__123)-[G__234]->(G__345)" "((G__234.lastName = 'Smith') OR (G__234.lastName = 'Anderson'))"] (assoc rel-base :props [{:last-name "Anderson"} {:last-name "Smith"}])
         ["(G__123)-[G__234]->(G__345 {a: 1, b: 2})" "ID(G__123) = 24"] rel-nodes
         ["(G__123)-[G__234:ENEMY]->(G__345 {a: 1, b: 2})" "ID(G__234) = 4 AND ID(G__123) = 24"] (assoc rel-nodes :type :enemy :id 4)))))
