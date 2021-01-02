@@ -106,8 +106,8 @@ label `:person` in Clojure would be `PERSON` in Cypher.
 ## Create graph structure
 
 ~~~clojure
-{:lookups         [Lookup]               ;; Collection of Lookup representations
- :nodes           [Node]                 ;; Collection of Node representations
- :relationships   [Relationship]         ;; Collection of Relationship representations
- :returns         ["G__123" "G__321"]    ;; Collection of reference-ids to return
+{:lookups   [Lookup]               ;; Collection of Lookup representations
+ :nodes     [Node]                 ;; Collection of Node representations
+ :rels      [Relationship]         ;; Collection of Relationship representations
+ :returns   ["G__123" "G__321"]    ;; Collection of reference-ids to return
 ~~~

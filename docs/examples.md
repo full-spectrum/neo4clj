@@ -162,11 +162,11 @@ To learn more about the Clojure representation of a relationship please see our 
 The keys `from` and `to` are Lookup representations. To learn more about the Clojure representation of a lookup entry please see our [representations](representations.md) page
 
 ~~~clojure
-(client/create-relationship! conn {:ref-id "p"
-                                   :type :employee
-                                   :from {:labels [:person] :props {:first-name "Neo"}}
-                                   :to {:id 12}
-                                   :props {:position "Developer"}})
+(client/create-rel! conn {:ref-id "p"
+                          :type :employee
+                          :from {:labels [:person] :props {:first-name "Neo"}}
+                          :to {:id 12}
+                          :props {:position "Developer"}})
 ~~~
 
 ### Find relationships in Neo4j
@@ -278,7 +278,7 @@ The `returns` key specifies a vector of `ref-id` from the other three keys to re
   conn
   {:lookups       [{:ref-id "c" :labels [:city] :props {:name "New York"}}]
    :nodes         [{:ref-id "p" :labels [:person] :props {:first-name "Neo"}}]
-   :relationships [{:type :lives-in :from {:ref-id "p"} :to {:ref-id "c"} :props {:born-here false}}]
+   :rels          [{:type :lives-in :from {:ref-id "p"} :to {:ref-id "c"} :props {:born-here false}}]
    :returns       ["c" "p"]})
 ~~~
 
@@ -293,11 +293,11 @@ The `returns` key specifies a vector of `ref-id` from the other two keys to retu
 ~~~clojure
 (client/get-graph
   conn
-  {:relationships [{:ref-id "r"
-                    :type :lives-in
-                    :from {:ref-id "p" :labels [:person] :props {:first-name "Neo"}}
-                    :to {:ref-id "c" :labels [:city]}}]
-   :returns       ["c" "p" "r"]})
+  {:rels    [{:ref-id "r"
+              :type :lives-in
+              :from {:ref-id "p" :labels [:person] :props {:first-name "Neo"}}
+              :to {:ref-id "c" :labels [:city]}}]
+   :returns ["c" "p" "r"]})
 ~~~
 
 #### Using operators for relationships
@@ -317,16 +317,16 @@ In this example we are looking for persons with the first name "Neo" currently l
 
 (client/get-graph
   conn
-  {:relationships [(op/exists
-                     {:ref-id "r"
-                      :type :lives-in
-                      :from person
-                      :to city})
-                   (op/not-exists
-                     {:type :born-in
-                      :from person
-                      :to city})]
-   :returns       ["c" "p" "r"]})
+  {:rels     [(op/exists
+               {:ref-id "r"
+                :type :lives-in
+                :from person
+                :to city})
+             (op/not-exists
+               {:type :born-in
+                :from person
+                :to city})]
+   :returns  ["c" "p" "r"]})
 ~~~
 
 
