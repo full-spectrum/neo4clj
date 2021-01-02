@@ -16,9 +16,9 @@
   [entity-fn {:keys [ref-id] :as entity} return?]
   (let [[base-cypher where-cypher] (entity-fn entity)]
     (str "MATCH "
-         (str base-cypher
-              (when where-cypher
-                (str " WHERE " where-cypher)))
+         base-cypher
+         (when where-cypher
+           (str " WHERE " where-cypher))
          (when return? (str " RETURN " ref-id)))))
 
 (defn lookup-node
