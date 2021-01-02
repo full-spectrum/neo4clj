@@ -106,9 +106,9 @@
   [conn node]
   (create-from-builder! conn node builder/create-node-query))
 
-(defn create-relationship!
+(defn create-rel!
   [conn rel]
-  (create-from-builder! conn rel builder/create-relationship-query))
+  (create-from-builder! conn rel builder/create-rel-query))
 
 (defn find-nodes!
   [conn ^clojure.lang.APersistentMap node]
@@ -126,7 +126,7 @@
   Format of the graph is:
   :lookups - collection of neo4j lookup representations
   :nodes - collection of neo4j node representations
-  :relationships  - collection of neo4j relationship representations
+  :rels  - collection of neo4j relationship representations
   :returns - collection of aliases to return from query"
   [conn ^clojure.lang.APersistentMap graph]
   (execute! conn (builder/create-graph-query graph)))
@@ -136,7 +136,7 @@
 
   Format of the graph is:
   :nodes - collection of neo4j node representations
-  :relationships  - collection of neo4j relationship representations
+  :rels  - collection of neo4j relationship representations
   :returns - collection of aliases to return from query
   :unique-by - reference-id to use for creating a list of distinct nodes"
   [conn ^clojure.lang.APersistentMap graph]
