@@ -31,29 +31,11 @@
         "MATCH (G__123:Label2:Label1) WHERE ID(G__123) = 4" node false
         "MATCH (G__123:Label2:Label1) WHERE ID(G__123) = 4 RETURN G__123" (assoc node :id 4) true))))
 
-(t/deftest lookup-relationship
+(t/deftest lookup-rel
   (t/testing "Cypher for lookup relationship query"
-    (let [rel-base {:ref-id "G__234" :from {:ref-id "G__123"} :to {:ref-id "G__345"}}
-          rel-full (assoc rel-base :id 4 :type :enemy :props {:a 2 :b 4})
-          rel-nodes {:ref-id "G__234" :from {:ref-id "G__123" :id 24} :to {:ref-id "G__345" :props {:a 1 :b 2}}}]
+    (let [rel {:ref-id "G__234" :id 4 :from {:ref-id "G__123"} :to {:ref-id "G__345"} :type :enemy :props {:a 2 :b 4}}]
       (t/are [expected-cypher entity return?]
-          (= expected-cypher (sut/lookup-relationship entity return?))
-        "MATCH (G__123)-[G__234]->(G__345)" rel-base false
-        "MATCH (G__123)-[G__234]->(G__345) RETURN G__234" rel-base true
-        "MATCH (G__123)-[G__234:ENEMY]->(G__345)" (assoc rel-base :type :enemy) false
-        "MATCH (G__123)-[G__234:ENEMY]->(G__345) RETURN G__234" (assoc rel-base :type :enemy) true
-        "MATCH (G__123)-[G__234]->(G__345) WHERE ID(G__234) = 4" (assoc rel-base :id 4) false
-        "MATCH (G__123)-[G__234]->(G__345) WHERE ID(G__234) = 4 RETURN G__234" (assoc rel-base :id 4) true
-        "MATCH (G__123)-[G__234:ENEMY]->(G__345) WHERE ID(G__234) = 4" (assoc rel-base :id 4 :type :enemy) false
-        "MATCH (G__123)-[G__234:ENEMY]->(G__345) WHERE ID(G__234) = 4 RETURN G__234" (assoc rel-base :id 4 :type :enemy) true
-        "MATCH (G__123)-[G__234 {a: 2, b: 4}]->(G__345) WHERE ID(G__234) = 4" (dissoc rel-full :type) false
-        "MATCH (G__123)-[G__234 {a: 2, b: 4}]->(G__345) WHERE ID(G__234) = 4 RETURN G__234" (dissoc rel-full :type) true
-        "MATCH (G__123)-[G__234:ENEMY {a: 2, b: 4}]->(G__345)" (dissoc rel-full :id) false
-        "MATCH (G__123)-[G__234:ENEMY {a: 2, b: 4}]->(G__345) RETURN G__234" (dissoc rel-full :id) true
-        "MATCH (G__123)-[G__234]->(G__345 {a: 1, b: 2}) WHERE ID(G__123) = 24" rel-nodes false
-        "MATCH (G__123)-[G__234]->(G__345 {a: 1, b: 2}) WHERE ID(G__123) = 24 RETURN G__234" rel-nodes true
-        "MATCH (G__123)-[G__234:ENEMY]->(G__345 {a: 1, b: 2}) WHERE ID(G__234) = 4 AND ID(G__123) = 24" (assoc rel-nodes :type :enemy :id 4) false
-        "MATCH (G__123)-[G__234:ENEMY]->(G__345 {a: 1, b: 2}) WHERE ID(G__234) = 4 AND ID(G__123) = 24 RETURN G__234" (assoc rel-nodes :type :enemy :id 4) true))))
+          (= expected-cypher (sut/lookup-rel entity return?))
         "MATCH (G__123)-[G__234:ENEMY]->(G__345) WHERE ID(G__234) = 4" rel false
         "MATCH (G__123)-[G__234:ENEMY]->(G__345) WHERE ID(G__234) = 4 RETURN G__234" rel true))))
 
@@ -75,7 +57,7 @@
       "MATCH (n:Person) " {:labels [:person]}
       "MATCH (n) WHERE ID(n) = 12 " {:id 12})))
 
-(t/deftest create-relationship-query
+(t/deftest create-rel-query
   (let [next-gensym (atom 0)]
     (with-redefs [cypher/gen-ref-id (fn [] (str "G__" (swap! next-gensym inc)))]
       (t/testing "Cypher to create a relationship between two nodes"
@@ -93,7 +75,7 @@
                                      :to {:ref-id "G__123"})]
           (t/are [expected-cypher rel-spec return?]
               (= expected-cypher (do (reset! next-gensym 0)
-                                     (sut/create-relationship-query rel-spec return?)))
+                                     (sut/create-rel-query rel-spec return?)))
             "CREATE (f)-[r:TEST_RELATION {a: 1}]->(l)" by-ref-rel false
             "CREATE (f)-[r:TEST_RELATION {a: 1}]->(l) RETURN r" by-ref-rel true
             "MATCH (G__1) WHERE ID(G__1) = 1 MATCH (G__2) WHERE ID(G__2) = 2 CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__2)" by-id-rel false
@@ -114,10 +96,10 @@
       ["(G__123)" nil] #{"G__123"} {:ref-id "G__123" :props {:first-name "Neo"}}
       ["(G__123)" nil] #{"G__123"} {:ref-id "G__123" :id 14})))
 
-(t/deftest non-existing-relationship-query
+(t/deftest non-existing-rel-query
   (t/testing "Cypher to create relationship not exists query"
     (t/are [expected-cypher rel known-ref-ids]
-        (= expected-cypher (sut/non-existing-relationship-query rel known-ref-ids))
+        (= expected-cypher (sut/non-existing-rel-query rel known-ref-ids))
       "NOT (G__1)-[:LIVING_AT]->(G__2)" {:from {:ref-id "G__1" :id 89} :to {:ref-id "G__2" :labels [:city]} :type :living-at} #{"G__1" "G__2"})))
 
 (t/deftest modify-labels-query

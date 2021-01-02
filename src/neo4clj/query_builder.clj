@@ -29,13 +29,13 @@
   [node return?]
   (lookup cypher/lookup-node node return?))
 
-(defn lookup-relationship
+(defn lookup-rel
   "Takes a relation lookup representation and generates a bolt query
 
   A lookup representation needs the :reference-id, :from and :to keys to be set and
   can take the optional :id, :type and :props keys"
-  [relationship return?]
-  (lookup cypher/lookup-relationship relationship return?))
+  [rel return?]
+  (lookup cypher/lookup-relationship rel return?))
 
 (defn index-query
   "Creates a query to modify index, allowed operations are: CREATE, DROP"
@@ -51,7 +51,7 @@
           false)
          " ")))
 
-(defn create-relationship-query
+(defn create-rel-query
   "Returns the bolt query to create a one directional relationship
   based on the given relationship representation"
   [{:keys [ref-id from to] :as rel} return?]
@@ -69,7 +69,7 @@
     [(str "(" ref-id ")") nil]
     (cypher/lookup-node node)))
 
-(defn non-existing-relationship-query
+(defn non-existing-rel-query
   "Returns the bolt query where part to test that the given relationship doesn't exists"
   ([{:keys [from to] :as rel} known-ref-ids]
    (str "NOT " (cypher/relationship
@@ -77,7 +77,7 @@
                 (first (node-reference known-ref-ids to))
                 rel)))
   ([rel]
-   (non-existing-relationship-query rel #{})))
+   (non-existing-rel-query rel #{})))
 
 (defn lookup-graph-query
   [rels]
@@ -91,7 +91,7 @@
       (if (empty? remaining-rels)
         (str query
              (str/join " AND "
-                       (map #(non-existing-relationship-query % known-ref-ids) not-exists-rels)))
+                       (map #(non-existing-rel-query % known-ref-ids) not-exists-rels)))
         (let [{:keys [from to] :as rel} (first remaining-rels)
               [from-node-cypher from-where-cypher] (node-reference known-ref-ids from)
               [to-node-cypher to-where-cypher] (node-reference known-ref-ids to)]
@@ -100,7 +100,7 @@
                  (or from-where-cypher to-where-cypher)
                  (str (when query
                         (str query " WITH " (str/join "," known-ref-ids) " "))
-                      (lookup-relationship rel false))))))))
+                      (lookup-rel rel false))))))))
 
 (defn get-return-ref-ids
   "Takes a list or vector of entity representatios or ref-ids and returns a list of ref-ids"
@@ -110,19 +110,19 @@
 (defn create-graph-query
   "Takes a graph representation and creates the nodes and relationship defined
   and returns any aliases specified in the representation"
-  [{:keys [lookups nodes relationships returns]}]
+  [{:keys [lookups nodes rels returns]}]
   (str/join " " (concat
                  (map #(lookup-node % false) lookups)
                  (map #(create-node-query % false) nodes)
-                 (map #(create-relationship-query % false) relationships)
+                 (map #(create-rel-query % false) rels)
                  (when-not (empty? returns)
                    (vector (str "RETURN " (str/join "," (get-return-ref-ids returns))))))))
 
 (defn get-graph-query
   "Takes a graph representation and fetches the nodes and relationship defined
   and returns any aliases specified in the representation"
-  [{:keys [relationships returns]}]
-  (str (lookup-graph-query relationships)
+  [{:keys [rels returns]}]
+  (str (lookup-graph-query rels)
        (when-not (empty? returns)
          (str " RETURN " (str/join "," (get-return-ref-ids returns))))))
 
