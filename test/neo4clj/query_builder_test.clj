@@ -118,6 +118,10 @@
       "="
       "+=")))
 
-(t/deftest delete-query
-  (t/testing "Cypher for deleting an entity"
-    (t/is (= "MATCH (G__1) WHERE ID(G__1) = 1 DELETE G__1" (sut/delete-query {:ref-id "G__1" :id 1})))))
+(t/deftest delete-node
+  (t/testing "Cypher for deleting a node"
+    (t/is (= "MATCH (G__1) WHERE ID(G__1) = 1 DELETE G__1" (sut/delete-node {:ref-id "G__1" :id 1})))))
+
+(t/deftest delete-rel
+  (t/testing "Cypher for deleting a relationship"
+    (t/is (= "MATCH ()-[G__1]->() WHERE ID(G__1) = 1 DELETE G__1" (sut/delete-rel {:ref-id "G__1" :id 1})))))
