@@ -42,6 +42,10 @@
   [^java.lang.String entity]
   entity)
 
+(defmethod neo4j->clj String
+  [^String entity]
+  entity)
+
 (defmethod neo4j->clj java.lang.Long
   [^java.lang.Long entity]
   entity)
