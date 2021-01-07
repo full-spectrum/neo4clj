@@ -3,12 +3,12 @@
             [com.rpl.specter :as specter :refer [MAP-VALS]]
             [neo4clj.sanitize :as sanitize]
             [java-time :as t])
-  (:import [org.neo4j.driver.v1 Values]
-           [org.neo4j.driver.v1.types Entity
-                                      Node
-                                      Relationship]
-           [org.neo4j.driver.v1 Record
-                                StatementResult]))
+  (:import [org.neo4j.driver Values]
+           [org.neo4j.driver.types Entity
+                                   Node
+                                   Relationship]
+           [org.neo4j.driver Record
+                             Result]))
 
 ;; Pattern used to recognize date-time values from Neo4J
 (def date-time-pattern #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}")
@@ -66,8 +66,8 @@
          :start-id (.startNodeId rel)
          :end-id (.endNodeId rel)))
 
-(defmethod neo4j->clj StatementResult
-  [^StatementResult result]
+(defmethod neo4j->clj Result
+  [^Result result]
   (->> (iterator-seq result)
        (map (fn [^Record r] (.asMap r)))
        (map #(reduce (fn [m [k v]] (assoc m k (neo4j->clj v))) {} %))))

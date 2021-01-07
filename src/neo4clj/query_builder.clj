@@ -69,7 +69,8 @@
     (cypher/lookup-node node)))
 
 (defn non-existing-rel-query
-  "Returns the bolt query where part to test that the given relationship doesn't exists"
+  "Returns the bolt query where part to test that the given relationship
+  doesn't exists"
   ([{:keys [from to] :as rel} known-ref-ids]
    (str "NOT " (cypher/relationship
                 (first (node-reference known-ref-ids from))
