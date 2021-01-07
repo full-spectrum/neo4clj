@@ -44,7 +44,7 @@
         (str/join ", " (map sanitize/cypher-property-key prop-keys)) ")"))
 
 (defn lookup-non-referred-node [ref-id node]
-  "Creates a query to lookup a node without a ref-id and refers it as given ref-id"
+  "Creates a query to lookup a node and refers it as given ref-id"
   (str (lookup-node
         (assoc node :ref-id ref-id)
         false)
