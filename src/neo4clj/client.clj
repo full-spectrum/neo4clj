@@ -174,8 +174,13 @@
    ^clojure.lang.APersistentMap neo4j-entity
    ^clojure.lang.APersistentMap props]
   (execute! conn (builder/modify-properties-query "=" neo4j-entity props)))
+(defn delete-node!
+  "Takes a neo4j node representation and deletes nodes found based on it"
+  [runner ^clojure.lang.APersistentMap neo4j-node]
+  (execute! runner (builder/delete-node neo4j-node)))
 
-(defn delete!
-  "Takes a neo4j representation and deletes objects found based on it"
-  [conn ^clojure.lang.APersistentMap neo4j-entity]
-  (execute! conn (builder/delete-query neo4j-entity)))
+(defn delete-rel!
+  "Takes a neo4j relationship representation and deletes relationships found based on it"
+  [runner ^clojure.lang.APersistentMap neo4j-rel]
+  (execute! runner (builder/delete-rel neo4j-rel)))
+
