@@ -52,7 +52,7 @@
   (t/testing "Cypher to lookup a node if it isn't allready reffered"
     (t/are [cypher node]
         (= cypher (sut/lookup-non-referred-node "n" node))
-      nil {:ref-id "G__123"}
+      "MATCH (n) " {:ref-id "G__123"}
       "MATCH (n) " {}
       "MATCH (n:Person) " {:labels [:person]}
       "MATCH (n) WHERE ID(n) = 12 " {:id 12})))
@@ -76,14 +76,14 @@
           (t/are [expected-cypher rel-spec return?]
               (= expected-cypher (do (reset! next-gensym 0)
                                      (sut/create-rel-query rel-spec return?)))
-            "CREATE (f)-[r:TEST_RELATION {a: 1}]->(l)" by-ref-rel false
-            "CREATE (f)-[r:TEST_RELATION {a: 1}]->(l) RETURN r" by-ref-rel true
+            "MATCH (f) MATCH (l) CREATE (f)-[r:TEST_RELATION {a: 1}]->(l)" by-ref-rel false
+            "MATCH (f) MATCH (l) CREATE (f)-[r:TEST_RELATION {a: 1}]->(l) RETURN r" by-ref-rel true
             "MATCH (G__1) WHERE ID(G__1) = 1 MATCH (G__2) WHERE ID(G__2) = 2 CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__2)" by-id-rel false
             "MATCH (G__1) WHERE ID(G__1) = 1 MATCH (G__2) WHERE ID(G__2) = 2 CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__2) RETURN r" by-id-rel true
             "MATCH (G__1:Phone:Fragment {b: 2}) MATCH (G__2:Address:Fragment {c: '6'}) CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__2)" by-lookup-rel false
             "MATCH (G__1:Phone:Fragment {b: 2}) MATCH (G__2:Address:Fragment {c: '6'}) CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__2) RETURN r" by-lookup-rel true
-            "MATCH (G__1:Phone:Fragment) WHERE ((G__1.b = 2) OR (G__1.b = 5)) CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__123)" by-combined-rel false
-            "MATCH (G__1:Phone:Fragment) WHERE ((G__1.b = 2) OR (G__1.b = 5)) CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__123) RETURN r" by-combined-rel true))))))
+            "MATCH (G__1:Phone:Fragment) WHERE ((G__1.b = 2) OR (G__1.b = 5)) MATCH (G__123) CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__123)" by-combined-rel false
+            "MATCH (G__1:Phone:Fragment) WHERE ((G__1.b = 2) OR (G__1.b = 5)) MATCH (G__123) CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__123) RETURN r" by-combined-rel true))))))
 
 (t/deftest node-reference
   (t/testing "Cypher to lookup or reference a already lookded up node"
