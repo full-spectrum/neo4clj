@@ -184,3 +184,14 @@
   [runner ^clojure.lang.APersistentMap neo4j-rel]
   (execute! runner (builder/delete-rel neo4j-rel)))
 
+(defn create-query
+  "Takes a cypher query as input and returns a anonymous function that
+  takes a query runner and return the query result as a map.
+
+  The function can also take a optional map of parameters used to replace params in the query string.
+
+  This functions can be used together with parameters to ensure better cached queries in Neo4J."
+  [query]
+  (fn
+    ([runner] (execute! runner query))
+    ([runner params] (execute! runner query params))))
