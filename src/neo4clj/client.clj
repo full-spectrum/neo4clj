@@ -5,37 +5,42 @@
             [neo4clj.query-builder :as builder])
   (:import  [org.neo4j.driver Driver Session QueryRunner SessionConfig Transaction TransactionWork]))
 
+(defrecord Connection [^Driver driver ^String database])
+
 (defn connect
   "Connect through bolt to the given neo4j server
 
   Supports the current options:
   :log :level [:all :error :warn :info :off] - defaults to :warn
-  :encryption [:required :none] - defaults to :required"
-  (^Driver [^String url]
-   (java-interop/connect url))
-  (^Driver [^String url ^clojure.lang.IPersistentMap opts]
-   (java-interop/connect url (java-interop/build-config opts)))
-  (^Driver [^String url ^String usr ^String pwd]
-   (java-interop/connect url usr pwd))
-  (^Driver [^String url ^String usr ^String pwd ^clojure.lang.IPersistentMap opts]
-   (java-interop/connect url usr pwd (java-interop/build-config opts))))
+  :encryption [:required :none] - defaults to :required
+  :database - defaults to nil"
+  (^Connection [^String url]
+   (Connection. (java-interop/connect url) nil))
+  (^Connection [^String url ^clojure.lang.IPersistentMap opts]
+   (Connection. (java-interop/connect url (java-interop/build-config opts)) (:database opts)))
+  (^Connection [^String url ^String usr ^String pwd]
+   (Connection. (java-interop/connect url usr pwd) nil))
+  (^Connection [^String url ^String usr ^String pwd ^clojure.lang.IPersistentMap opts]
+   (Connection. (java-interop/connect url usr pwd (java-interop/build-config opts)) (:database opts))))
 
 (defn disconnect
   "Disconnect the given connection"
-  [^Driver conn]
-  (.close conn))
+  [^Connection conn]
+  (.close (:driver conn)))
 
 (defn create-session
   "Create a new session on the given Neo4J connection"
-  ^Session [^Driver conn]
-  (.session conn))
+  (^Session [^Connection {:keys [driver database] :as conn}]
+   (if database
+     (.session driver (SessionConfig/forDatabase database))
+     (.session driver))))
 
 (defmacro with-session
   "Creates a session with the given name on the given connection and executes the body
   within the session.
 
   The session can be used with the given name in the rest of the body."
-  [^Driver conn session & body]
+  [^Connection conn session & body]
   `(with-open [~session (create-session ~conn)]
         ~@body))
 
@@ -47,19 +52,19 @@
 (defn commit!
   "Commits the given transaction"
   [^Transaction trans]
-  (.success trans))
+  (.commit trans))
 
 (defn rollback
   "Rolls the given transaction back"
   [^Transaction trans]
-  (.failure trans))
+  (.rollback trans))
 
 (defmacro with-transaction
   "Create a transaction with given name on the given connection execute the body
   within the transaction.
 
   The transaction can be used with the given name in the rest of the body."
-  [^Driver conn trans & body]
+  [^Connection conn trans & body]
   `(with-open [~trans (begin-transaction (create-session ~conn))]
       (try
         ~@body
@@ -72,53 +77,84 @@
   "Execute the given query on the specified connection with optional parameters"
   (fn [conn & args] (class conn)))
 
-(defmethod execute! Driver
-  ([^Driver conn ^String query]
+(defmethod execute! Connection
+  ([^Connection conn ^String query]
    (execute! conn query {}))
-  ([^Driver conn ^String query ^clojure.lang.IPersistentMap params]
+  ([^Connection conn ^String query ^clojure.lang.IPersistentMap params]
    (with-open [session (create-session conn)]
      (java-interop/execute session query params))))
 
-(defmethod execute! StatementRunner
-  ([^StatementRunner runner ^String query]
+(defmethod execute! QueryRunner
+  ([^QueryRunner runner ^String query]
    (java-interop/execute runner query))
-  ([^StatementRunner runner ^String query ^clojure.lang.IPersistentMap params]
+  ([^QueryRunner runner ^String query ^clojure.lang.IPersistentMap params]
    (java-interop/execute runner query params)))
 
+(defmacro with-read-conn
+  "Create a managed read transaction with the name given as runner-alias and execute the
+  body within the transaction.
+
+  The runner-alias given for the transaction can be used within the body."
+  [^Connection conn runner-alias & body]
+  `(with-open [session# (create-session ~conn)]
+     (.readTransaction
+      session#
+      (proxy [TransactionWork] []
+        (execute [~runner-alias]
+          ~@body)))))
+
+(defmacro with-write-conn
+  "Create a managed write transaction with the name given as runner-alias and execute the
+  body within the transaction.
+
+  The runner-alias given for the transaction can be used within the body."
+  [^Connection conn runner-alias & body]
+  `(with-open [session# (create-session ~conn)]
+     (.writeTransaction
+      session#
+      (proxy [TransactionWork] []
+        (execute [~runner-alias]
+          ~@body)))))
+
 (defn create-index!
-  [conn label prop-keys]
-  (execute! conn (builder/index-query "CREATE" label prop-keys)))
+  "Creates an index on the given combination and properties"
+  [runner label prop-keys]
+  (execute! runner (builder/index-query "CREATE" label prop-keys)))
 
 (defn drop-index!
-  [conn label prop-keys]
-  (execute! conn (builder/index-query "DROP" label prop-keys)))
+  "Delete an index on the given combination and properties"
+  [runner label prop-keys]
+  (execute! runner (builder/index-query "DROP" label prop-keys)))
 
 (defn create-from-builder!
-  [conn ^clojure.lang.APersistentMap entity builder]
+  "Helper function to execute a specific query builder string and return the results"
+  [runner ^clojure.lang.APersistentMap entity builder]
   (let [ref-id (or (:ref-id entity) (cypher/gen-ref-id))]
-    (-> (execute! conn (builder (assoc entity :ref-id ref-id) true))
+    (-> (execute! runner (builder (assoc entity :ref-id ref-id) true))
         first
         (get ref-id)
         (assoc :ref-id ref-id))))
 
-
 (defn create-node!
-  [conn node]
-  (create-from-builder! conn node builder/create-node-query))
+  "Create a node based on the given Node representation"
+  [runner node]
+  (create-from-builder! runner node builder/create-node-query))
 
 (defn create-rel!
-  [conn rel]
-  (create-from-builder! conn rel builder/create-rel-query))
+  "Create a relationship based on the given Relationship representation"
+  [runner rel]
+  (create-from-builder! runner rel builder/create-rel-query))
 
-(defn find-nodes!
-  [conn ^clojure.lang.APersistentMap node]
+(defn find-nodes
+  "Takes a Node representation and returns all matching nodes"
+  [runner ^clojure.lang.APersistentMap node]
   (map #(get % (:ref-id node))
-       (execute! conn (builder/lookup-node node true))))
+       (execute! runner (builder/lookup-node node true))))
 
-(defn find-relationships!
-  [conn ^clojure.lang.APersistentMap rel]
+(defn find-rels
+  [runner ^clojure.lang.APersistentMap rel]
   (map #(get % (:ref-id rel))
-       (execute! conn (builder/lookup-relationship rel true))))
+       (execute! runner (builder/lookup-rel rel true))))
 
 (defn create-graph!
   "Optimized function to create a whole graph within a transaction
@@ -128,8 +164,8 @@
   :nodes - collection of neo4j node representations
   :rels  - collection of neo4j relationship representations
   :returns - collection of aliases to return from query"
-  [conn ^clojure.lang.APersistentMap graph]
-  (execute! conn (builder/create-graph-query graph)))
+  [runner ^clojure.lang.APersistentMap graph]
+  (execute! runner (builder/create-graph-query graph)))
 
 (defn get-graph
   "Lookups the nodes based on given relationships and returns specified entities
@@ -137,24 +173,23 @@
   Format of the graph is:
   :nodes - collection of neo4j node representations
   :rels  - collection of neo4j relationship representations
-  :returns - collection of aliases to return from query
-  :unique-by - reference-id to use for creating a list of distinct nodes"
-  [conn ^clojure.lang.APersistentMap graph]
-  (execute! conn (builder/get-graph-query graph)))
+  :returns - collection of aliases to return from query"
+  [runner ^clojure.lang.APersistentMap graph]
+  (execute! runner (builder/get-graph-query graph)))
 
 (defn add-labels!
   "Takes a collection of labels and adds them to the found neo4j nodes"
-  [conn
+  [runner
    ^clojure.lang.APersistentMap neo4j-node
    ^clojure.lang.APersistentVector labels]
-  (execute! conn (builder/modify-labels-query "SET" neo4j-node labels)))
+  (execute! runner (builder/modify-labels-query "SET" neo4j-node labels)))
 
 (defn remove-labels!
   "Takes a collection of labels and removes them from found neo4j nodes"
-  [conn
+  [runner
    ^clojure.lang.APersistentMap neo4j-node
    ^clojure.lang.APersistentVector labels]
-  (execute! conn (builder/modify-labels-query "REMOVE" neo4j-node labels)))
+  (execute! runner (builder/modify-labels-query "REMOVE" neo4j-node labels)))
 
 (defn update-props!
   "Takes a property map and updates the found neo4j objects with it based on the
@@ -163,17 +198,18 @@
   Keys existing only in the given property map is added to the object
   Keys existing only in the property map on the found object is kept as is
   Keys existing in both property maps are updated with values from the given property map"
-  [conn
+  [runner
    ^clojure.lang.APersistentMap neo4j-entity
    ^clojure.lang.APersistentMap props]
-  (execute! conn (builder/modify-properties-query "+=" neo4j-entity props)))
+  (execute! runner (builder/modify-properties-query "+=" neo4j-entity props)))
 
 (defn replace-props!
   "Takes a property map and replaces the properties on all found neo4j objects with it"
-  [conn
+  [runner
    ^clojure.lang.APersistentMap neo4j-entity
    ^clojure.lang.APersistentMap props]
-  (execute! conn (builder/modify-properties-query "=" neo4j-entity props)))
+  (execute! runner (builder/modify-properties-query "=" neo4j-entity props)))
+
 (defn delete-node!
   "Takes a neo4j node representation and deletes nodes found based on it"
   [runner ^clojure.lang.APersistentMap neo4j-node]
@@ -190,7 +226,7 @@
 
   The function can also take a optional map of parameters used to replace params in the query string.
 
-  This functions can be used together with parameters to ensure better cached queries in Neo4J."
+  This functions can be used together with parameters to ensure better cached queries in Neo4j."
   [query]
   (fn
     ([runner] (execute! runner query))
