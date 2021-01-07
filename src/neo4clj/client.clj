@@ -3,7 +3,7 @@
             [neo4clj.cypher :as cypher]
             [neo4clj.java-interop :as java-interop]
             [neo4clj.query-builder :as builder])
-  (:import  [org.neo4j.driver.v1 Driver Session StatementRunner Transaction]))
+  (:import  [org.neo4j.driver Driver Session QueryRunner SessionConfig Transaction TransactionWork]))
 
 (defn connect
   "Connect through bolt to the given neo4j server

@@ -1,8 +1,12 @@
 (ns neo4clj.java-interop
   (:require [neo4clj.convert :as convert])
   (:import [org.neo4j.driver.internal.logging ConsoleLogging]
-           [org.neo4j.driver.v1 AuthTokens Config Config$EncryptionLevel Driver
-                                GraphDatabase StatementRunner]
+           [org.neo4j.driver AuthTokens
+                             Config
+                             Config$ConfigBuilder
+                             Driver
+                             GraphDatabase
+                             QueryRunner]
            [java.util Map]
            [java.util.logging Level]))
 
@@ -14,6 +18,13 @@
    :info  Level/INFO
    :off   Level/OFF})
 
+(defn set-encryption
+  "Convenience function to determine wheter or not to use encryption"
+  [^Config$ConfigBuilder builder encrypted]
+  (if encrypted
+    (.withEncryption builder)
+    (.withoutEncryption builder)))
+
 (defn build-config
   "Generates a new Neo4J Config object based on the given options
 
@@ -21,21 +32,18 @@
   :log :level [:all :error :warn :info :off] - defaults to :warn
   :encryption [:required :none] - defaults to :required"
   ^Config [^clojure.lang.IPersistentMap opts]
-  (let [log-level (get-in opts [:log :level] :warn)
-        encryption-level (if (= (:encryption opts) :none)
-                           Config$EncryptionLevel/NONE
-                           Config$EncryptionLevel/REQUIRED)]
-    (.. (Config/build)
-        (withLogging (ConsoleLogging. (get log-level-mapping log-level)))
-        (withEncryptionLevel encryption-level)
-        toConfig)))
+  (let [log-level (get-in opts [:log :level] :warn)]
+    (-> (Config/builder)
+        (.withLogging (ConsoleLogging. (get log-level-mapping log-level)))
+        (set-encryption (not= (:encryption opts) :none))
+        (.build))))
 
 (defn connect
   "Create a new Neo4J connection to the given url, with optional credentials and configuration"
   (^Driver [^String url]
    (GraphDatabase/driver url))
   (^Driver [^String url ^Config cfg]
-   (GraphDatabase/driver url))
+   (GraphDatabase/driver url cfg))
   (^Driver [^String url ^String usr ^String pwd]
    (GraphDatabase/driver url (AuthTokens/basic usr pwd)))
   (^Driver [^String url ^String usr ^String pwd ^Config cfg]
@@ -43,7 +51,7 @@
 
 (defn execute
   "Runs the given query with optional parameters on the given Neo4J session/transaction"
-  ([^StatementRunner runner ^String query]
+  ([^QueryRunner runner ^String query]
    (execute runner query {}))
-  ([^StatementRunner runner ^String query ^Map params]
-   (convert/neo4j->clj (.run runner query (convert/clj-parameters->neo4j params)))))
+  ([^QueryRunner runner ^String query ^Map params]
+   (doall (convert/neo4j->clj (.run runner query (convert/clj-parameters->neo4j params))))))
