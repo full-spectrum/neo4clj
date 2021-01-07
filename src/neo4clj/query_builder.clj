@@ -45,11 +45,10 @@
 
 (defn lookup-non-referred-node [ref-id node]
   "Creates a query to lookup a node without a ref-id and refers it as given ref-id"
-  (when-not (:ref-id node)
-    (str (lookup-node
-          (assoc node :ref-id ref-id)
-          false)
-         " ")))
+  (str (lookup-node
+        (assoc node :ref-id ref-id)
+        false)
+       " "))
 
 (defn create-rel-query
   "Returns the bolt query to create a one directional relationship
@@ -103,18 +102,30 @@
                       (lookup-rel rel false))))))))
 
 (defn get-return-ref-ids
-  "Takes a list or vector of entity representatios or ref-ids and returns a list of ref-ids"
+  "Takes a list or vector of entity representatios or ref-ids and
+  returns a list of ref-ids"
   [^clojure.lang.IPersistentStack returns]
   (map #(if (map? %) (:ref-id %) %) returns))
 
+(defn- create-graph-rel-query
+  "Returns a query string to be used specifically inside a create graph
+  cypher query. The query represents the creation of a one directional
+  relationship based on the given relationship representation.
+
+  The relationship can only be created between already MATCHED'ed
+  nodes in the graph query"
+  [{:keys [ref-id from to] :as rel}]
+  (str "CREATE "
+       (cypher/relationship (str "(" (:ref-id from) ")") (str "(" (:ref-id to) ")") rel)))
+
 (defn create-graph-query
-  "Takes a graph representation and creates the nodes and relationship defined
-  and returns any aliases specified in the representation"
+  "Takes a graph representation and creates the nodes and relationship
+  defined and returns any aliases specified in the representation"
   [{:keys [lookups nodes rels returns]}]
   (str/join " " (concat
                  (map #(lookup-node % false) lookups)
                  (map #(create-node-query % false) nodes)
-                 (map #(create-rel-query % false) rels)
+                 (map create-graph-rel-query rels)
                  (when-not (empty? returns)
                    (vector (str "RETURN " (str/join "," (get-return-ref-ids returns))))))))
 
@@ -143,7 +154,12 @@
   (str (lookup-node (assoc entity :ref-id ref-id) false) " SET "
        ref-id " " operation (cypher/properties props)))
 
-(defn delete-query
-  "Takes a neo4j entity representation and deletes it"
-  [{:keys [ref-id] :or {ref-id "e"} :as entity}]
-  (str (lookup-node (assoc entity :ref-id ref-id) false) " DELETE " ref-id))
+(defn delete-node
+  "Takes a neo4j node representation and deletes it"
+  [{:keys [ref-id] :or {ref-id "n"} :as node}]
+  (str (lookup-node (assoc node :ref-id ref-id) false) " DELETE " ref-id))
+
+(defn delete-rel
+  "Takes a neo4j relationship representation and deletes it"
+  [{:keys [ref-id] :or {ref-id "r"} :as rel}]
+  (str (lookup-rel (assoc rel :ref-id ref-id) false) " DELETE " ref-id))
