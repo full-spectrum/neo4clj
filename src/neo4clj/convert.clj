@@ -70,7 +70,7 @@
   [^Result result]
   (->> (iterator-seq result)
        (map (fn [^Record r] (.asMap r)))
-       (map #(reduce (fn [m [k v]] (assoc m k (neo4j->clj v))) {} %))))
+       (map #(reduce (fn [m [k v]] (assoc m k (assoc (neo4j->clj v) :ref-id k))) {} %))))
 
 (defn clj-value->neo4j-value
   "Convert a given clojure primitive into its bolt query equivalent

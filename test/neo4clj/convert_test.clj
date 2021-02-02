@@ -69,8 +69,8 @@
                                                              (.put "b" 2)))
       {:id 1 :labels [:person] :props {:first-name "Neo" :last-name "Anderson"}} neo4j-node
       {:id 4 :type :employee :start-id 4 :end-id 11 :props {:hired-at 2008 :position "Technician"}} neo4j-relationship
-      '({"n" {:id 1 :labels [:person] :props {:first-name "Neo" :last-name "Anderson"}}
-         "r" {:id 4 :type :employee :start-id 4 :end-id 11 :props {:hired-at 2008 :position "Technician"}}}) neo4j-statement-result)))
+      '({"n" {:id 1 :ref-id "n" :labels [:person] :props {:first-name "Neo" :last-name "Anderson"}}
+         "r" {:id 4 :ref-id "r" :type :employee :start-id 4 :end-id 11 :props {:hired-at 2008 :position "Technician"}}}) neo4j-statement-result)))
 
 (t/deftest clj-value->neo4j-value
   (t/testing "Convert Clojure property to its Neo4j equivalent"
