@@ -111,3 +111,19 @@ label `:person` in Clojure would be `PERSON` in Cypher.
  :rels      [Relationship]         ;; Collection of Relationship representations
  :returns   ["G__123" "G__321"]    ;; Collection of reference-ids to return
 ~~~
+
+In addition to the normal Relationship representation, it is possible to use the ref-id's associated with the
+nodes in :lookups and :nodes directly in the :from and :to key.
+
+## Get graph structure
+
+~~~clojure
+{:nodes     [Node]                 ;; Collection of Node representations
+ :rels      [Relationship]         ;; Collection of Relationship representations
+ :returns   ["G__123" "G__321"]    ;; Collection of reference-ids to return
+~~~
+
+In addition to the normal Relationship representation, it is possible to use the ref-id's associated with the
+nodes in :lookups and :nodes directly in the :from and :to key. Also in addition the :from and :to keys are optional,
+which allows the query to match any node. It is also possible to use the additional key :exists, which take a boolean
+as value, to represent non-existent relationships.

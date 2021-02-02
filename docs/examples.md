@@ -269,66 +269,50 @@ The `lookups` key specifies a vector of [lookup representations](representations
 
 The `nodes` key specifies a vector of [node representations](representations.md#node) to create.
 
-The `relatioships` key specifies a vector of [relationship representations](representations.md#relationship) to create. It is possible to use `ref-id` from the `lookups` vector in the `to` and `from` keys of the relationship.
+The `relatioships` key specifies a vector of [relationship representations](representations.md#relationship) to create.
+It is possible to use `ref-id` from the `lookups` vector in the `to` and `from` keys of the relationship, either as a map or directly as a string.
 
-The `returns` key specifies a vector of `ref-id` from the other three keys to return as the result of the call.
+The `returns` key specifies a vector of `ref-id` from the other three keys to return as the result of the call. The values given can be a map or a string.
 
 ~~~clojure
 (client/create-graph!
   conn
   {:lookups       [{:ref-id "c" :labels [:city] :props {:name "New York"}}]
    :nodes         [{:ref-id "p" :labels [:person] :props {:first-name "Neo"}}]
-   :rels          [{:type :lives-in :from {:ref-id "p"} :to {:ref-id "c"} :props {:born-here false}}]
-   :returns       ["c" "p"]})
+   :rels          [{:type :lives-in :from {:ref-id "p"} :to "c" :props {:born-here false}}]
+   :returns       [{:ref-id "c"} "p"]})
 ~~~
 
 ### Get Graph
 
 To make it easier to fetch nodes and relationships, we have made a function to do it all in one single call.
 
-The `relatioships` key specifies a vector of [relationship representations](representations.md#relationship) which needs to exists between the nodes to match.
+The `nodes` key specifies a vector og [node representations](representations.md#node) which is used in the relationships.
+The nodes can also be specified directly in the reletaionship representation under the :rels key instead.
+If a node with a given :ref-id is specified in the :nodes key, this representation is always used, even if a complete node
+representation is given in the relationship.
 
-The `returns` key specifies a vector of `ref-id` from the other two keys to return as the result of the call.
+The `relatioships` key specifies a vector of [relationship representations](representations.md#relationship) which needs to exists between the nodes to match.
+There is some small differences compared to the normal representation. The main one being that the keys :from and :to are optional, and the additional
+key :exists can be used to represent non-existent relationships.
+
+The `returns` key specifies a vector of `ref-id` from the other two keys to return as the result of the call. The values given can be a map or a string.
 
 ~~~clojure
 (client/get-graph
   conn
-  {:rels    [{:ref-id "r"
+  {:nodes [{:ref-id "m" :labels [:company] :props {:name "The Matrix"} :id 19}]
+   :rels    [{:ref-id "r1"
               :type :lives-in
               :from {:ref-id "p" :labels [:person] :props {:first-name "Neo"}}
-              :to {:ref-id "c" :labels [:city]}}]
-   :returns ["c" "p" "r"]})
+              :to {:ref-id "c" :labels [:city]}}
+             {:ref-id "r2"
+              :type :works-for
+              :from {:ref-id "p" :labels [:person] :props {:first-name "Neo"}}
+              :to "m"
+              :exists false}]
+   :returns [{:ref-id "c"} "p" "r1"]})
 ~~~
-
-#### Using operators for relationships
-
-To make more advanced graph specifications to fetch from Neo4j, we have support for simple operators. These exists in the namespace `neo4clj.operator`
-
-Notice that relationship representations with the `not-exists` operator doen't require the `ref-id` key and if no operator is used `exists` will be used by default.
-
-In this example we are looking for persons with the first name "Neo" currently living in "New York", but is not born there
-
-~~~clojure
-(require '[neo4clj.operator :as op])
-
-(def person {:ref-id "p" :labels [:person] :props {:first-name "Neo"}})
-
-(def city {:ref-id "c" :labels [:city] :props {:city "New York"}})
-
-(client/get-graph
-  conn
-  {:rels     [(op/exists
-               {:ref-id "r"
-                :type :lives-in
-                :from person
-                :to city})
-             (op/not-exists
-               {:type :born-in
-                :from person
-                :to city})]
-   :returns  ["c" "p" "r"]})
-~~~
-
 
 ## Create and drop indexes
 
