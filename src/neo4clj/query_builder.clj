@@ -11,7 +11,7 @@
 (defn lookup
   "Takes a lookup representation and generates a bolt query
 
-  A lookup representation needs the :reference.id to be set and
+  A lookup representation needs the :ref-id to be set and
   either the :id or :labels and :props keys"
   [entity-fn {:keys [ref-id] :as entity} return?]
   (let [[base-cypher where-cypher] (entity-fn entity)]
@@ -32,7 +32,7 @@
 (defn lookup-rel
   "Takes a relation lookup representation and generates a bolt query
 
-  A lookup representation needs the :reference-id, :from and :to keys to be set and
+  A lookup representation needs the :ref-id, :from and :to keys to be set and
   can take the optional :id, :type and :props keys"
   [rel return?]
   (lookup cypher/lookup-relationship rel return?))
