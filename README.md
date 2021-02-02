@@ -61,9 +61,10 @@ Create and delete indexes
 
 ## Version matrix
 
-| Neo4clj  | Clojure | `neo-java-driver` | Neo4j Server |
-| -------- | ------- | ----------------- | ------------ |
-|   1.0.0  |  1.10.0 |             1.7.2 |        3.5.x |
+| Neo4clj        | Clojure | `neo-java-driver` | Neo4j Server |
+| -------------- | ------- | ----------------- | ------------ |
+| 1.0.0-SNAPSHOT |  1.10.0 |             1.7.2 |        3.5.x |
+| 1.0.0-ALPHA1   |  1.10.0 |             4.2.0 |        4.2.x |
 
 
 ## Acknowledgements
@@ -76,6 +77,6 @@ neo4j-clj by Christian Betz (https://github.com/gorillalabs/neo4j-clj)
 
 ## License
 
-Copyright (C) 2019 Claus Engel-Christensen, Jacob Emcken, and the Full Spectrum team.
+Copyright (C) 2021 Claus Engel-Christensen, Jacob Emcken, and the Full Spectrum team.
 
 Licensed under the [Eclipse Public License](http://www.eclipse.org/legal/epl-v10.html)
