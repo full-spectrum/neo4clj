@@ -145,13 +145,26 @@
   [runner rel]
   (create-from-builder! runner rel builder/create-rel-query))
 
+(defn find-node
+  "Takes a Node representation and returns a single matching node"
+  [runner ^clojure.lang.APersistentMap node]
+  (first (map #(get % (:ref-id node))
+              (execute! runner (str (builder/lookup-node node true) " LIMIT 1")))))
+
 (defn find-nodes
   "Takes a Node representation and returns all matching nodes"
   [runner ^clojure.lang.APersistentMap node]
   (map #(get % (:ref-id node))
        (execute! runner (builder/lookup-node node true))))
 
+(defn find-rel
+  "Takes a Relationship representation and returns a single matching relationship"
+  [runner ^clojure.lang.APersistentMap rel]
+  (first (map #(get % (:ref-id rel))
+              (execute! runner (str (builder/lookup-rel rel true) " LIMIT 1")))))
+
 (defn find-rels
+  "Takes a Relationship representation and returns all matching relationships"
   [runner ^clojure.lang.APersistentMap rel]
   (map #(get % (:ref-id rel))
        (execute! runner (builder/lookup-rel rel true))))
