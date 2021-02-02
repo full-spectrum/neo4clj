@@ -48,15 +48,6 @@
         "CREATE"
         "DROP"))))
 
-(t/deftest lookup-non-referred-node
-  (t/testing "Cypher to lookup a node if it isn't allready reffered"
-    (t/are [cypher node]
-        (= cypher (sut/lookup-non-referred-node "n" node))
-      "MATCH (n) " {:ref-id "G__123"}
-      "MATCH (n) " {}
-      "MATCH (n:Person) " {:labels [:person]}
-      "MATCH (n) WHERE ID(n) = 12 " {:id 12})))
-
 (t/deftest create-rel-query
   (let [next-gensym (atom 0)]
     (with-redefs [cypher/gen-ref-id (fn [] (str "G__" (swap! next-gensym inc)))]
@@ -85,22 +76,43 @@
             "MATCH (G__1:Phone:Fragment) WHERE ((G__1.b = 2) OR (G__1.b = 5)) MATCH (G__123) CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__123)" by-combined-rel false
             "MATCH (G__1:Phone:Fragment) WHERE ((G__1.b = 2) OR (G__1.b = 5)) MATCH (G__123) CREATE (G__1)-[r:TEST_RELATION {a: 1}]->(G__123) RETURN r" by-combined-rel true))))))
 
-(t/deftest node-reference
-  (t/testing "Cypher to lookup or reference a already lookded up node"
-    (t/are [expected-cypher-parts known-ref-ids node]
-        (= expected-cypher-parts (sut/node-reference known-ref-ids node))
-      ["(G__123:Person)" nil] #{} {:ref-id "G__123" :labels [:person]}
-      ["(G__123 {firstName: 'Neo'})" nil] #{} {:ref-id "G__123" :props {:first-name "Neo"}}
-      ["(G__123)" "ID(G__123) = 14"] #{} {:ref-id "G__123" :id 14}
-      ["(G__123)" nil] #{"G__123"} {:ref-id "G__123" :labels [:person]}
-      ["(G__123)" nil] #{"G__123"} {:ref-id "G__123" :props {:first-name "Neo"}}
-      ["(G__123)" nil] #{"G__123"} {:ref-id "G__123" :id 14})))
+(t/deftest create-graph-query
+  (t/testing "Cypher to create a graph"
+    (let [graph-map {:lookups [{:ref-id "n1" :labels [:person] :id 4}]
+                     :nodes [{:ref-id "n2" :labels [:company]}]
+                     :rels [{:ref-id "r1" :type :employee :from "n1" :to {:ref-id "n2"}}]
+                     :returns ["n1" {:ref-id "n2"} "r1"]}]
+      (t/are [expected-cypher graph-spec]
+          (= expected-cypher (sut/create-graph-query graph-spec))
+        "MATCH (n1:Person) WHERE ID(n1) = 4 CREATE (n1)-[r1:EMPLOYEE]->(n2:Company) RETURN n1, n2, r1" graph-map
+        "MATCH (n1:Person) WHERE ID(n1) = 4 MATCH (n2:Company) CREATE (n1)-[r1:EMPLOYEE]->(n2) RETURN n1, n2, r1" (dissoc (update-in graph-map [:lookups] concat (:nodes graph-map)) :nodes)
+        "CREATE (n1:Person)-[r1:EMPLOYEE]->(n2:Company) RETURN n1, n2, r1" (dissoc (update-in graph-map [:nodes] concat (:lookups graph-map)) :lookups)
+        "MATCH (n1:Person) WHERE ID(n1) = 4 MATCH (n2) WHERE ID(n2) = 5 CREATE (n1)-[r1:EMPLOYEE]->(n2) RETURN n1, n2, r1" (dissoc (update-in graph-map [:lookups] conj {:ref-id "n2" :id 5}) :nodes)
+        "MATCH (n1:Person) WHERE ID(n1) = 4 CREATE (n1)-[r1:EMPLOYEE]->(n2:Company) CREATE (n2)-[r2:EMPLOYES]->(n1) RETURN n1, n2, r1, r2" (update-in (update-in graph-map [:rels] conj {:ref-id "r2" :type :employes :from "n2" :to "n1"}) [:returns] conj "r2")))))
 
-(t/deftest non-existing-rel-query
-  (t/testing "Cypher to create relationship not exists query"
-    (t/are [expected-cypher rel known-ref-ids]
-        (= expected-cypher (sut/non-existing-rel-query rel known-ref-ids))
-      "NOT (G__1)-[:LIVING_AT]->(G__2)" {:from {:ref-id "G__1" :id 89} :to {:ref-id "G__2" :labels [:city]} :type :living-at} #{"G__1" "G__2"})))
+(t/deftest lookup-graph-query
+  (t/testing "Cypher to lookup a graph"
+    (let [node-entries {"n1" {:ref-id "n1" :labels [:person]}}
+          relationships [{:ref-id "r1" :type :owner :from "n1" :to {:ref-id "n2" :labels [:person] :id 4}}]]
+      (t/are [expected-cypher nodes rels]
+          (= expected-cypher (sut/lookup-graph-query nodes rels))
+        "MATCH (n1:Person)-[r1:OWNER]->(n2:Person) WHERE ID(n2) = 4" node-entries relationships
+        "MATCH ()-[r1:OWNER]->()" node-entries [{:ref-id "r1" :type :owner :from nil}]
+        "MATCH ()-[r1:OWNER]->()" node-entries [{:ref-id "r1" :type :owner :from nil :to {}}]
+        "MATCH (n1:Person)-[r1:OWNER]->(n2:Person) WHERE ID(n2) = 4" (assoc node-entries "n3" {:ref-id "n3" :labels [:customer]}) relationships
+        "MATCH (n1:Person)-[r1:OWNER]->(n2:Person)" (assoc node-entries "n2" {:ref-id "n2" :labels [:person]}) [(assoc (first relationships) :to "n2")]
+        "MATCH (n1:Person)-[r1:OWNER]->(n2:Person) MATCH (n1)-[r2:EMPLOYEE]->(n3:Company) WHERE ID(n2) = 4 AND ID(n3) = 6" (assoc node-entries "n3" {:ref-id "n3" :labels [:company]:id 6}) (conj relationships {:ref-id "r2" :type :employee :from "n1" :to "n3"})
+        "MATCH (n1:Person)-[r1:OWNER]->(n2:Person) MATCH (n3:Company) WHERE ID(n2) = 4 AND ID(n3) = 6 AND NOT (n1)-[:EMPLOYEE]->(n3)" (assoc node-entries "n3" {:ref-id "n3" :labels [:company]:id 6}) (conj relationships {:ref-id "r2" :type :employee :from "n1" :to "n3" :exists false})
+        "MATCH (n1:Person) MATCH (n3:Company) WHERE ID(n3) = 6 AND NOT (n1)-[:EMPLOYEE]->(n3)" (assoc node-entries "n3" {:ref-id "n3" :labels [:company]:id 6}) [{:ref-id "r2" :type :employee :from "n1" :to "n3" :exists false}]))))
+
+(t/deftest get-graph-query
+  (t/testing "Cypher to fetch a graph"
+    (let [graph-map {:nodes [{:ref-id "n1" :labels [:company]}]
+                     :rels [{:ref-id "r1" :type :owner :from "n1" :to {:ref-id "n2" :labels [:person] :id 4}}]
+                     :returns ["n1" {:ref-id "n2"} "r1"]}]
+      (t/are [expected-cypher graph-spec]
+          (= expected-cypher (sut/get-graph-query graph-spec))
+        "MATCH (n1:Company)-[r1:OWNER]->(n2:Person) WHERE ID(n2) = 4 RETURN n1, n2, r1" graph-map))))
 
 (t/deftest modify-labels-query
   (t/testing "Cypher for Modifying labels on an entity"
