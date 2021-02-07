@@ -78,41 +78,93 @@
 
 (t/deftest create-graph-query
   (t/testing "Cypher to create a graph"
-    (let [graph-map {:lookups [{:ref-id "n1" :labels [:person] :id 4}]
-                     :nodes [{:ref-id "n2" :labels [:company]}]
-                     :rels [{:ref-id "r1" :type :employee :from "n1" :to {:ref-id "n2"}}]
-                     :returns ["n1" {:ref-id "n2"} "r1"]}]
-      (t/are [expected-cypher graph-spec]
-          (= expected-cypher (sut/create-graph-query graph-spec))
-        "MATCH (n1:Person) WHERE ID(n1) = 4 CREATE (n1)-[r1:EMPLOYEE]->(n2:Company) RETURN n1, n2, r1" graph-map
-        "MATCH (n1:Person) WHERE ID(n1) = 4 MATCH (n2:Company) CREATE (n1)-[r1:EMPLOYEE]->(n2) RETURN n1, n2, r1" (dissoc (update-in graph-map [:lookups] concat (:nodes graph-map)) :nodes)
-        "CREATE (n1:Person)-[r1:EMPLOYEE]->(n2:Company) RETURN n1, n2, r1" (dissoc (update-in graph-map [:nodes] concat (:lookups graph-map)) :lookups)
-        "MATCH (n1:Person) WHERE ID(n1) = 4 MATCH (n2) WHERE ID(n2) = 5 CREATE (n1)-[r1:EMPLOYEE]->(n2) RETURN n1, n2, r1" (dissoc (update-in graph-map [:lookups] conj {:ref-id "n2" :id 5}) :nodes)
-        "MATCH (n1:Person) WHERE ID(n1) = 4 CREATE (n1)-[r1:EMPLOYEE]->(n2:Company) CREATE (n2)-[r2:EMPLOYES]->(n1) RETURN n1, n2, r1, r2" (update-in (update-in graph-map [:rels] conj {:ref-id "r2" :type :employes :from "n2" :to "n1"}) [:returns] conj "r2")))))
+    (t/are [expected-cypher graph-spec]
+        (= expected-cypher (sut/create-graph-query graph-spec))
+      "MATCH (n1:Person) WHERE ID(n1) = 4 CREATE (n1)-[r1:EMPLOYEE]->(n2:Company) RETURN n1, n2, r1"
+      {:lookups [{:ref-id "n1" :labels [:person] :id 4}]
+       :nodes [{:ref-id "n2" :labels [:company]}]
+       :rels [{:ref-id "r1" :type :employee :from "n1" :to {:ref-id "n2"}}]
+       :returns ["n1" {:ref-id "n2"} "r1"]}
+
+      "MATCH (n1:Person) WHERE ID(n1) = 4 MATCH (n2:Company) CREATE (n1)-[r1:EMPLOYEE]->(n2) RETURN n1, n2, r1"
+      {:lookups [{:ref-id "n1" :labels [:person] :id 4}
+                 {:ref-id "n2" :labels [:company]}]
+       :rels [{:ref-id "r1" :type :employee :from "n1" :to {:ref-id "n2"}}]
+       :returns ["n1" {:ref-id "n2"} "r1"]}
+
+      "CREATE (n1:Person)-[r1:EMPLOYEE]->(n2:Company) RETURN n1, n2, r1"
+      {:nodes [{:ref-id "n2" :labels [:company]}
+               {:ref-id "n1" :labels [:person] :id 4}]
+       :rels [{:ref-id "r1" :type :employee :from "n1" :to {:ref-id "n2"}}]
+       :returns ["n1" {:ref-id "n2"} "r1"]}
+
+      "MATCH (n1:Person) WHERE ID(n1) = 4 MATCH (n2) WHERE ID(n2) = 5 CREATE (n1)-[r1:EMPLOYEE]->(n2) RETURN n1, n2, r1"
+      {:lookups [{:ref-id "n1" :labels [:person] :id 4}
+                 {:ref-id "n2" :id 5}]
+       :rels [{:ref-id "r1" :type :employee :from "n1" :to {:ref-id "n2"}}]
+       :returns ["n1" {:ref-id "n2"} "r1"]}
+
+      "MATCH (n1:Person) WHERE ID(n1) = 4 CREATE (n1)-[r1:EMPLOYEE]->(n2:Company) CREATE (n2)-[r2:EMPLOYES]->(n1) RETURN n1, n2, r1, r2"
+      {:lookups [{:ref-id "n1" :labels [:person] :id 4}]
+       :nodes [{:ref-id "n2" :labels [:company]}]
+       :rels [{:ref-id "r1" :type :employee :from "n1" :to {:ref-id "n2"}}
+              {:ref-id "r2" :type :employes :from "n2" :to "n1"}]
+       :returns ["n1" {:ref-id "n2"} "r1" "r2"]}
+      )))
 
 (t/deftest lookup-graph-query
   (t/testing "Cypher to lookup a graph"
-    (let [node-entries {"n1" {:ref-id "n1" :labels [:person]}}
-          relationships [{:ref-id "r1" :type :owner :from "n1" :to {:ref-id "n2" :labels [:person] :id 4}}]]
-      (t/are [expected-cypher nodes rels]
-          (= expected-cypher (sut/lookup-graph-query nodes rels))
-        "MATCH (n1:Person)-[r1:OWNER]->(n2:Person) WHERE ID(n2) = 4" node-entries relationships
-        "MATCH ()-[r1:OWNER]->()" node-entries [{:ref-id "r1" :type :owner :from nil}]
-        "MATCH ()-[r1:OWNER]->()" node-entries [{:ref-id "r1" :type :owner :from nil :to {}}]
-        "MATCH (n1:Person)-[r1:OWNER]->(n2:Person) WHERE ID(n2) = 4" (assoc node-entries "n3" {:ref-id "n3" :labels [:customer]}) relationships
-        "MATCH (n1:Person)-[r1:OWNER]->(n2:Person)" (assoc node-entries "n2" {:ref-id "n2" :labels [:person]}) [(assoc (first relationships) :to "n2")]
-        "MATCH (n1:Person)-[r1:OWNER]->(n2:Person) MATCH (n1)-[r2:EMPLOYEE]->(n3:Company) WHERE ID(n2) = 4 AND ID(n3) = 6" (assoc node-entries "n3" {:ref-id "n3" :labels [:company]:id 6}) (conj relationships {:ref-id "r2" :type :employee :from "n1" :to "n3"})
-        "MATCH (n1:Person)-[r1:OWNER]->(n2:Person) MATCH (n3:Company) WHERE ID(n2) = 4 AND ID(n3) = 6 AND NOT (n1)-[:EMPLOYEE]->(n3)" (assoc node-entries "n3" {:ref-id "n3" :labels [:company]:id 6}) (conj relationships {:ref-id "r2" :type :employee :from "n1" :to "n3" :exists false})
-        "MATCH (n1:Person) MATCH (n3:Company) WHERE ID(n3) = 6 AND NOT (n1)-[:EMPLOYEE]->(n3)" (assoc node-entries "n3" {:ref-id "n3" :labels [:company]:id 6}) [{:ref-id "r2" :type :employee :from "n1" :to "n3" :exists false}]))))
+    (t/are [expected-cypher nodes rels]
+        (= expected-cypher (sut/lookup-graph-query nodes rels))
+      "MATCH (n1:Person)-[r1:OWNER]->(n2:Person) WHERE ID(n2) = 4"
+      {"n1" {:ref-id "n1" :labels [:person]}}
+      [{:ref-id "r1" :type :owner :from "n1" :to {:ref-id "n2" :labels [:person] :id 4}}]
+
+      "MATCH ()-[r1:OWNER]->()"
+      {"n1" {:ref-id "n1" :labels [:person]}}
+      [{:ref-id "r1" :type :owner :from nil}]
+
+      "MATCH ()-[r1:OWNER]->()"
+      {"n1" {:ref-id "n1" :labels [:person]}}
+      [{:ref-id "r1" :type :owner :from nil :to {}}]
+
+      "MATCH (n1:Person)-[r1:OWNER]->(n2:Person) WHERE ID(n2) = 4"
+      {"n1" {:ref-id "n1" :labels [:person]}
+       "n3" {:ref-id "n3" :labels [:customer]}}
+      [{:ref-id "r1" :type :owner :from "n1" :to {:ref-id "n2" :labels [:person] :id 4}}]
+
+      "MATCH (n1:Person)-[r1:OWNER]->(n2:Person)"
+      {"n1" {:ref-id "n1" :labels [:person]}
+       "n2" {:ref-id "n2" :labels [:person]}}
+      [{:ref-id "r1" :type :owner :from "n1" :to "n2"}]
+
+      "MATCH (n1:Person)-[r1:OWNER]->(n2:Person) MATCH (n1)-[r2:EMPLOYEE]->(n3:Company) WHERE ID(n2) = 4 AND ID(n3) = 6"
+      {"n1" {:ref-id "n1" :labels [:person]}
+       "n3" {:ref-id "n3" :labels [:company]:id 6}}
+      [{:ref-id "r1" :type :owner :from "n1" :to {:ref-id "n2" :labels [:person] :id 4}}
+       {:ref-id "r2" :type :employee :from "n1" :to "n3"}]
+
+      "MATCH (n1:Person)-[r1:OWNER]->(n2:Person) MATCH (n3:Company) WHERE ID(n2) = 4 AND ID(n3) = 6 AND NOT (n1)-[:EMPLOYEE]->(n3)"
+      {"n1" {:ref-id "n1" :labels [:person]}
+       "n3" {:ref-id "n3" :labels [:company]:id 6}}
+      [{:ref-id "r1" :type :owner :from "n1" :to {:ref-id "n2" :labels [:person] :id 4}}
+       {:ref-id "r2" :type :employee :from "n1" :to "n3" :exists false}]
+
+      "MATCH (n1:Person) MATCH (n3:Company) WHERE ID(n3) = 6 AND NOT (n1)-[:EMPLOYEE]->(n3)"
+      {"n1" {:ref-id "n1" :labels [:person]}
+       "n3" {:ref-id "n3" :labels [:company]:id 6}}
+      [{:ref-id "r2" :type :employee :from "n1" :to "n3" :exists false}]
+      )))
 
 (t/deftest get-graph-query
   (t/testing "Cypher to fetch a graph"
-    (let [graph-map {:nodes [{:ref-id "n1" :labels [:company]}]
-                     :rels [{:ref-id "r1" :type :owner :from "n1" :to {:ref-id "n2" :labels [:person] :id 4}}]
-                     :returns ["n1" {:ref-id "n2"} "r1"]}]
-      (t/are [expected-cypher graph-spec]
-          (= expected-cypher (sut/get-graph-query graph-spec))
-        "MATCH (n1:Company)-[r1:OWNER]->(n2:Person) WHERE ID(n2) = 4 RETURN n1, n2, r1" graph-map))))
+    (t/are [expected-cypher graph-spec]
+        (= expected-cypher (sut/get-graph-query graph-spec))
+      "MATCH (n1:Company)-[r1:OWNER]->(n2:Person) WHERE ID(n2) = 4 RETURN n1, n2, r1"
+      {:nodes [{:ref-id "n1" :labels [:company]}]
+       :rels [{:ref-id "r1" :type :owner :from "n1" :to {:ref-id "n2" :labels [:person] :id 4}}]
+       :returns ["n1" {:ref-id "n2"} "r1"]}
+      )))
 
 (t/deftest modify-labels-query
   (t/testing "Cypher for Modifying labels on an entity"

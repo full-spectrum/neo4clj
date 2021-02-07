@@ -269,7 +269,7 @@ The `lookups` key specifies a vector of [lookup representations](representations
 
 The `nodes` key specifies a vector of [node representations](representations.md#node) to create.
 
-The `relatioships` key specifies a vector of [relationship representations](representations.md#relationship) to create.
+The `rels` key specifies a vector of [relationship representations](representations.md#relationship) to create.
 It is possible to use `ref-id` from the `lookups` vector in the `to` and `from` keys of the relationship, either as a map or directly as a string.
 
 The `returns` key specifies a vector of `ref-id` from the other three keys to return as the result of the call. The values given can be a map or a string.
@@ -287,12 +287,12 @@ The `returns` key specifies a vector of `ref-id` from the other three keys to re
 
 To make it easier to fetch nodes and relationships, we have made a function to do it all in one single call.
 
-The `nodes` key specifies a vector og [node representations](representations.md#node) which is used in the relationships.
+The `nodes` key specifies a vector of [node representations](representations.md#node) which is used in the relationships.
 The nodes can also be specified directly in the reletaionship representation under the :rels key instead.
 If a node with a given :ref-id is specified in the :nodes key, this representation is always used, even if a complete node
 representation is given in the relationship.
 
-The `relatioships` key specifies a vector of [relationship representations](representations.md#relationship) which needs to exists between the nodes to match.
+The `rels` key specifies a vector of [relationship representations](representations.md#relationship) which needs to exists between the nodes to match.
 There is some small differences compared to the normal representation. The main one being that the keys :from and :to are optional, and the additional
 key :exists can be used to represent non-existent relationships.
 

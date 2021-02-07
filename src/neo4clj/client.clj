@@ -148,8 +148,11 @@
 (defn find-node
   "Takes a Node representation and returns a single matching node"
   [runner ^clojure.lang.APersistentMap node]
-  (first (map #(get % (:ref-id node))
-              (execute! runner (str (builder/lookup-node node true) " LIMIT 1")))))
+  (->>
+  (str (builder/lookup-node node true) " LIMIT 1")
+  (execute! runner)
+  (map #(get % (:ref-id node)))
+  first))
 
 (defn find-nodes
   "Takes a Node representation and returns all matching nodes"
