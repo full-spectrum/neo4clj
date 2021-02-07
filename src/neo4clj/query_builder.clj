@@ -41,7 +41,7 @@
   "Creates a query to modify index, allowed operations are: CREATE, DROP"
   [operation label prop-keys]
   (str operation " INDEX ON :" (sanitize/cypher-label label) "("
-        (str/join ", " (map sanitize/cypher-property-key prop-keys)) ")"))
+       (str/join ", " (map sanitize/cypher-property-key prop-keys)) ")"))
 
 (defn- lookup-non-referred-node [ref-id node]
   "Creates a query to lookup a node and refers it as given ref-id"
@@ -110,15 +110,15 @@
          known-refs known-ref-ids
          rel-queries []
          where-parts []]
-      (if (empty? remaining-rels)
-        [rel-queries where-parts known-refs]
-        (let [{:keys [from to] :as rel} (first remaining-rels)
-              [from-query from-where] (node-reference known-refs node-entries from as-lookup?)
-              [to-query to-where] (node-reference known-refs node-entries to as-lookup?)]
-          (recur (rest remaining-rels)
-                 (conj known-refs (node-ref-id from) (node-ref-id to))
-                 (conj rel-queries (cypher/relationship from-query to-query rel))
-                 (concat where-parts (remove nil? [from-where to-where])))))))
+    (if (empty? remaining-rels)
+      [rel-queries where-parts known-refs]
+      (let [{:keys [from to] :as rel} (first remaining-rels)
+            [from-query from-where] (node-reference known-refs node-entries from as-lookup?)
+            [to-query to-where] (node-reference known-refs node-entries to as-lookup?)]
+        (recur (rest remaining-rels)
+               (conj known-refs (node-ref-id from) (node-ref-id to))
+               (conj rel-queries (cypher/relationship from-query to-query rel))
+               (concat where-parts (remove nil? [from-where to-where])))))))
 
 (defn create-graph-query
   "Takes a graph representation and creates the nodes and relationship
@@ -167,12 +167,12 @@
   wheres and other wheres given."
   [node-entries known-ref-ids not-exists-rels where-parts]
   (let [[unmatched-node-lookups unmatched-node-wheres] (lookup-unmatched-nodes node-entries known-ref-ids not-exists-rels)]
-    (str (when (not (empty? unmatched-node-lookups))
+    (str (when-not (empty? unmatched-node-lookups)
            (str " MATCH " (str/join " MATCH " unmatched-node-lookups)))
          " WHERE "
          (str/join " AND " (concat where-parts
-                                  unmatched-node-wheres
-                                  (map lookup-non-existing-graph-rel not-exists-rels))))))
+                                   unmatched-node-wheres
+                                   (map lookup-non-existing-graph-rel not-exists-rels))))))
 
 (defn lookup-graph-query
   "Takes a list of node-entries and relations. Returns a query string
@@ -182,10 +182,10 @@
         exists-rels (get grouped-relations false)
         not-exists-rels (get grouped-relations true)
         [rel-queries where-parts known-ref-ids] (generate-relation-queries #{} node-entries exists-rels true)]
-      (str/trim (str (when (not (empty? rel-queries))
-                       (str "MATCH " (str/join " MATCH " rel-queries)))
-                     (when (or (not (empty? not-exists-rels)) (not (empty? where-parts)))
-                       (lookup-graph-single-matches-and-wheres node-entries known-ref-ids not-exists-rels where-parts))))))
+    (str/trim (str (when-not (empty? rel-queries)
+                     (str "MATCH " (str/join " MATCH " rel-queries)))
+                   (when (or (not-empty not-exists-rels) (not-empty where-parts))
+                     (lookup-graph-single-matches-and-wheres node-entries known-ref-ids not-exists-rels where-parts))))))
 
 (defn get-graph-query
   "Takes a graph representation and fetches the nodes and relationship defined
