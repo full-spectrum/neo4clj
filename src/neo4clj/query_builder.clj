@@ -94,10 +94,12 @@
    (node-reference known-ref-ids node-entries node as-lookup? false))
   ([known-ref-ids node-entries node as-lookup? unknown-only?]
    (let [ref-id (node-ref-id node)]
-     (if-let [known-ref? (known-ref-ids ref-id)]
-       (when (not unknown-only?)
-         [(str "(" ref-id ")") nil])
-       ((if as-lookup? cypher/lookup-node #(vector (cypher/node %) nil)) (or (node-entries ref-id) node))))))
+     (cond
+       (and (nil? ref-id) unknown-only?) [nil nil]
+       (not (nil? (known-ref-ids ref-id))) (when (not unknown-only?)
+                                             [(str "(" ref-id ")") nil])
+       :else ((if as-lookup? cypher/lookup-node #(vector (cypher/node %) nil))
+              (or (node-entries ref-id) node))))))
 
 (defn- generate-relation-queries
   "Takes a set of known reference id's, a map of node entries to
