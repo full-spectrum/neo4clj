@@ -42,7 +42,7 @@
   The session can be used with the given name in the rest of the body."
   [^Connection conn session & body]
   `(with-open [~session (create-session ~conn)]
-        ~@body))
+     ~@body))
 
 (defn begin-transaction
   "Start a new transaction on the given Neo4J session"
@@ -66,12 +66,12 @@
   The transaction can be used with the given name in the rest of the body."
   [^Connection conn trans & body]
   `(with-open [~trans (begin-transaction (create-session ~conn))]
-      (try
-        ~@body
-        (catch Exception e#
-          (rollback ~trans)
-          (throw e#))
-        (finally (commit! ~trans)))))
+     (try
+       ~@body
+       (catch Exception e#
+         (rollback ~trans)
+         (throw e#))
+       (finally (commit! ~trans)))))
 
 (defmulti execute!
   "Execute the given query on the specified connection with optional parameters"
@@ -149,28 +149,35 @@
   "Takes a Node representation and returns a single matching node"
   [runner ^clojure.lang.APersistentMap node]
   (->>
-  (str (builder/lookup-node node true) " LIMIT 1")
-  (execute! runner)
-  (map #(get % (:ref-id node)))
-  first))
+   (str (builder/lookup-node node true) " LIMIT 1")
+   (execute! runner)
+   (map #(get % (:ref-id node)))
+   first))
 
 (defn find-nodes
   "Takes a Node representation and returns all matching nodes"
   [runner ^clojure.lang.APersistentMap node]
-  (map #(get % (:ref-id node))
-       (execute! runner (builder/lookup-node node true))))
+  (->>
+   (builder/lookup-node node true)
+   (execute! runner)
+   (map #(get % (:ref-id node)))))
 
 (defn find-rel
   "Takes a Relationship representation and returns a single matching relationship"
   [runner ^clojure.lang.APersistentMap rel]
-  (first (map #(get % (:ref-id rel))
-              (execute! runner (str (builder/lookup-rel rel true) " LIMIT 1")))))
+  (->>
+   (str (builder/lookup-rel rel true) " LIMIT 1")
+   (execute! runner)
+   (map #(get % (:ref-id rel)))
+   first))
 
 (defn find-rels
   "Takes a Relationship representation and returns all matching relationships"
   [runner ^clojure.lang.APersistentMap rel]
-  (map #(get % (:ref-id rel))
-       (execute! runner (builder/lookup-rel rel true))))
+  (->>
+   (builder/lookup-rel rel true)
+   (execute! runner)
+   (map #(get % (:ref-id rel)))))
 
 (defn create-graph!
   "Optimized function to create a whole graph within a transaction
