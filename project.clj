@@ -1,4 +1,4 @@
-(defproject fullspectrum/neo4clj "1.0.0-ALPHA1"
+(defproject fullspectrum/neo4clj "1.0.0-ALPHA2"
   :description "Clojure client for Neo4j"
   :url "https://github.com/full-spectrum/neo4clj"
   :license {:name "The MIT License"
