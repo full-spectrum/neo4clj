@@ -128,6 +128,10 @@
       {"n1" {:ref-id "n1" :labels [:person]}}
       [{:ref-id "r1" :type :owner :from nil :to {}}]
 
+      "MATCH (n1:Person) WHERE NOT ()-[:OWNER]->(n1)"
+      {"n1" {:ref-id "n1" :labels [:person]}}
+      [{:ref-id "r1" :type :owner :from nil :to "n1" :exists false}]
+
       "MATCH (n1:Person)-[r1:OWNER]->(n2:Person) WHERE ID(n2) = 4"
       {"n1" {:ref-id "n1" :labels [:person]}
        "n3" {:ref-id "n3" :labels [:customer]}}
