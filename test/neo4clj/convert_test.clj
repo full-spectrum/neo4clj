@@ -84,7 +84,7 @@
       "'key'" :key
       "['test', 'something', 'else']" ["test" "something" "else"]
       "['else', 'something', 'test']" #{"test" "something" "else"}
-      "'2018-04-28T12:53:11Z'" (time/instant "2018-04-28T12:53:11Z"))))
+      "datetime(\"2018-04-28T12:53:11Z\")" (time/instant "2018-04-28T12:53:11Z"))))
 
 (t/deftest hash-map->properties
   (t/testing "Convert Clojure properties map to a sanitized Neo4j properties map"
