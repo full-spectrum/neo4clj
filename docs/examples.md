@@ -136,6 +136,18 @@ To learn more about the Clojure representation of a node please see our [represe
                                    :last-name "Anderson"}})
 ~~~
 
+### Find a single node in Neo4j
+
+The entry given to `find-node!` is a Node Lookup representation. To learn more about the Clojure Node Lookup representation see our [representations](representations.md) page
+
+~~~clojure
+(client/find-node! conn {:ref-id "p"
+                         :id 17
+                         :labels [:person]})
+~~~
+
+Returns a single node representation if found or nil otherwise.
+
 ### Find nodes in Neo4j
 
 The entry given to `find-nodes!` is a lookup representation. To learn more about the Clojure lookup representation see our [representations](representations.md) page
@@ -146,6 +158,20 @@ The entry given to `find-nodes!` is a lookup representation. To learn more about
                           :props {:first-name "Neo"
                                   :last-name "Anderson"}})
 ~~~
+
+### Finding a node or nodes with given relationships
+
+It is possible to give a optional key :rels to a Node Lookup representation. To learn more about the Clojure lookup representation see our [representations](representations.md) page. If set the query will look for a given node where the given relationships exists.
+
+~~~clojure
+(client/find-nodes! conn {:ref-id "p"
+                          :labels [:person]
+                          :props {:first-name "Neo"
+                                  :last-name "Anderson"}
+                          :rels [{:ref-id "r" :type :employee :to "p"}]})
+~~~
+
+Returns all nodes of type person and the name Neo Anderson, who has a relation of type employee pointing to it.
 
 ### Update and Delete Node
 
@@ -265,11 +291,11 @@ This section shows how to do basic CRUD operations on a whole graph through Neo4
 
 To make it easier to create nodes and relationships, we have made a function to do it in one single call.
 
-The `lookups` key specifies a vector of [lookup representations](representations.md#lookup) referring existing nodes in the database.
+The `lookups` key specifies a vector of [Node Lookup representations](representations.md#Node Lookup) referring existing nodes in the database.
 
-The `nodes` key specifies a vector of [node representations](representations.md#node) to create.
+The `nodes` key specifies a vector of [Node representations](representations.md#node) to create.
 
-The `rels` key specifies a vector of [relationship representations](representations.md#relationship) to create.
+The `rels` key specifies a vector of [Relationship representations](representations.md#relationship) to create.
 It is possible to use `ref-id` from the `lookups` vector in the `to` and `from` keys of the relationship, either as a map or directly as a string.
 
 The `returns` key specifies a vector of `ref-id` from the other three keys to return as the result of the call. The values given can be a map or a string.
@@ -282,6 +308,19 @@ The `returns` key specifies a vector of `ref-id` from the other three keys to re
    :rels          [{:type :lives-in :from {:ref-id "p"} :to "c" :props {:born-here false}}]
    :returns       [{:ref-id "c"} "p"]})
 ~~~
+
+The Node Lookup representation, makes it possible to make complex lookup on existing nodes before using them to create new relationships.
+
+~~~clojure
+(client/create-graph!
+  conn
+  {:lookups       [{:ref-id "c" :labels [:city] :rels [{:ref-id "r" :from {:ref-id "m" :name "The Matrix"} :type :present-in :to "c" :exists false}]}]
+   :nodes         [{:ref-id "p" :labels [:person] :props {:first-name "Neo"}}]
+   :rels          [{:type :lives-in :from {:ref-id "p"} :to "c" :props {:born-here false}}]
+   :returns       [{:ref-id "c"} "p"]})
+~~~
+
+Ensures Neo only get a lives-in relation to cities where the Matrix is not present-in.
 
 ### Get Graph
 

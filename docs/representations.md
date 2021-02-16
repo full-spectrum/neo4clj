@@ -103,10 +103,35 @@ label `:person` in Clojure would be `PERSON` in Cypher.
               :property-2 "something else"}]}
 ~~~
 
+## Node Lookup
+
+~~~clojure
+{:ref-id   "G__312"                      ;; The variable name used for this entity in bolt queries
+ :labels   [:example-node]               ;; Optional collection of labels required to be a match
+ :id       5                             ;; Optional id to match
+ :props    {:property-1 "something"}     ;; Optional properties to match
+ :rels     [Relationship Lookup]}        ;; Collection of Relationship Lookup representations to match on
+~~~
+
+The examples from Lookup above is also valid as variations here
+
+## Relationship Lookup
+
+~~~clojure
+{:ref-id   "G__321"                      ;; The variable name used for this entity in bolt queries
+ :id       12                            ;; Optional id to match
+ :type     :example-relationship         ;; Optional type of the relationship to match
+ :from     Node                          ;; Optional Node representation to match on as start node of relationship
+ :to       Node                          ;; Optional Node representation to match on as end node of relationship
+ :props    {:property-1 123              ;; Optional map of properties on the relationship to match
+            :property-2 "something"}
+ :exists   false}                        ;; Optional boolean value to check for wheter a relationship exists or not
+~~~
+
 ## Create graph structure
 
 ~~~clojure
-{:lookups   [Lookup]               ;; Collection of Lookup representations
+{:lookups   [Lookup]               ;; Collection of Node Lookup representations
  :nodes     [Node]                 ;; Collection of Node representations
  :rels      [Relationship]         ;; Collection of Relationship representations
  :returns   ["G__123" "G__321"]    ;; Collection of reference-ids to return
@@ -119,7 +144,7 @@ nodes in :lookups and :nodes directly in the :from and :to key.
 
 ~~~clojure
 {:nodes     [Node]                 ;; Collection of Node representations
- :rels      [Relationship]         ;; Collection of Relationship representations
+ :rels      [Relationship]         ;; Collection of Relationship Lookup representations
  :returns   ["G__123" "G__321"]    ;; Collection of reference-ids to return
 ~~~
 
