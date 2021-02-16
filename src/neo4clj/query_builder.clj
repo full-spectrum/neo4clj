@@ -162,13 +162,26 @@
                 (str "(" (or (:ref-id to) to) ")")
                 (dissoc rel :ref-id)))))
 
+(defn- ensure-ref-id
+  [{:keys [ref-id] :as entity}]
+  (cond
+    (nil? entity) nil
+    (string? entity) entity
+    (nil? ref-id) (assoc entity :ref-id (cypher/gen-ref-id))
+    :else entity))
+
+(defn ensure-rel-nodes-have-ref-id
+  [{:keys [from to] :as rel}]
+  (update (update rel :from ensure-ref-id) :to ensure-ref-id))
+
 (defn- lookup-graph-single-matches-and-wheres
   "Takes a list of node entries, known reference ids, relations to
   check for non-existence and a collection of where queries.
   Returns a query with missing node matches, non existent relation
   wheres and other wheres given."
   [node-entries known-ref-ids not-exists-rels where-parts]
-  (let [[unmatched-node-lookups unmatched-node-wheres] (lookup-unmatched-nodes node-entries known-ref-ids not-exists-rels)]
+  (let [not-exists-rels (map ensure-rel-nodes-have-ref-id not-exists-rels)
+        [unmatched-node-lookups unmatched-node-wheres] (lookup-unmatched-nodes node-entries known-ref-ids not-exists-rels)]
     (str (when-not (empty? unmatched-node-lookups)
            (str " MATCH " (str/join " MATCH " unmatched-node-lookups)))
          " WHERE "
