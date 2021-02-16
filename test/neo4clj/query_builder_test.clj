@@ -29,7 +29,34 @@
       (t/are [expected-cypher entity return?]
           (= expected-cypher (sut/lookup-node entity return?))
         "MATCH (G__123:Label2:Label1) WHERE ID(G__123) = 4" node false
-        "MATCH (G__123:Label2:Label1) WHERE ID(G__123) = 4 RETURN G__123" (assoc node :id 4) true))))
+
+        "MATCH (G__123:Label2:Label1) WHERE ID(G__123) = 4 RETURN G__123" node true
+
+        "MATCH ()-[r:EMPLOYEE]->(n:Male:Person) WHERE ID(n) = 4 RETURN n"
+        {:ref-id "n"
+         :id 4
+         :labels [:person :male]
+         :props {:a "1" :b "2"}
+         :rels [{:ref-id "r" :type :employee :to "n"}]}
+        true
+
+        "MATCH (n:Male:Person) WHERE ID(n) = 4 AND NOT (n)-[:MARRIED_TO]->()"
+        {:ref-id "n"
+         :id 4
+         :labels [:person :male]
+         :props {:a "1" :b "2"}
+         :rels [{:ref-id "r2" :type :married-to :from "n" :exists false}]}
+        false
+
+        "MATCH ()-[r1:EMPLOYEE]->(n:Male:Person) WHERE ID(n) = 4 AND NOT (n)-[:MARRIED_TO]->() RETURN n"
+        {:ref-id "n"
+         :id 4
+         :labels [:person :male]
+         :props {:a "1" :b "2"}
+         :rels [{:ref-id "r1" :type :employee :to "n"}
+                {:ref-id "r2" :type :married-to :from "n" :exists false}]}
+        true
+        ))))
 
 (t/deftest lookup-rel
   (t/testing "Cypher for lookup relationship query"
@@ -110,6 +137,24 @@
        :rels [{:ref-id "r1" :type :employee :from "n1" :to {:ref-id "n2"}}
               {:ref-id "r2" :type :employes :from "n2" :to "n1"}]
        :returns ["n1" {:ref-id "n2"} "r1" "r2"]}
+
+      "MATCH (n1:Person)-[r2:MARRIED_TO]->() WHERE ID(n1) = 4 MATCH (n2:Company) CREATE (n1)-[r1:EMPLOYEE]->(n2) RETURN n1, n2, r1"
+      {:lookups [{:ref-id "n1" :labels [:person] :id 4 :rels [{:ref-id "r2" :type :married-to :from "n1"}]}
+                 {:ref-id "n2" :labels [:company]}]
+       :rels [{:ref-id "r1" :type :employee :from "n1" :to {:ref-id "n2"}}]
+       :returns ["n1" {:ref-id "n2"} "r1"]}
+
+      "MATCH (n1:Person) WHERE NOT (n1)-[:MARRIED_TO]->() MATCH (n2:Company) CREATE (n1)-[r1:EMPLOYEE]->(n2) RETURN n1, n2, r1"
+      {:lookups [{:ref-id "n1" :labels [:person] :rels [{:ref-id "r2" :type :married-to :from "n1" :exists false}]}
+                 {:ref-id "n2" :labels [:company]}]
+       :rels [{:ref-id "r1" :type :employee :from "n1" :to {:ref-id "n2"}}]
+       :returns ["n1" {:ref-id "n2"} "r1"]}
+
+      "MATCH (n1:Person)-[r2:MARRIED_TO]->(n3:Person) WHERE ID(n1) = 4 AND ID(n3) = 16 MATCH (n2:Company) CREATE (n1)-[r1:EMPLOYEE]->(n2) RETURN n1, n2, r1"
+      {:lookups [{:ref-id "n1" :labels [:person] :id 4 :rels [{:ref-id "r2" :type :married-to :from "n1" :to {:ref-id "n3" :labels [:person] :id 16}}]}
+                 {:ref-id "n2" :labels [:company]}]
+       :rels [{:ref-id "r1" :type :employee :from "n1" :to {:ref-id "n2"}}]
+       :returns ["n1" {:ref-id "n2"} "r1"]}
       )))
 
 (t/deftest lookup-graph-query
@@ -131,7 +176,7 @@
           {"n1" {:ref-id "n1" :labels [:person]}}
           [{:ref-id "r1" :type :owner :from nil :to {}}]
 
-          "MATCH (n1:Person) WHERE NOT ()-[:OWNER]->(n1)"
+          " MATCH (n1:Person) WHERE NOT ()-[:OWNER]->(n1)"
           {"n1" {:ref-id "n1" :labels [:person]}}
           [{:ref-id "r1" :type :owner :from nil :to "n1" :exists false}]
 
@@ -157,12 +202,12 @@
           [{:ref-id "r1" :type :owner :from "n1" :to {:ref-id "n2" :labels [:person] :id 4}}
            {:ref-id "r2" :type :employee :from "n1" :to "n3" :exists false}]
 
-          "MATCH (n1:Person) MATCH (n3:Company) WHERE ID(n3) = 6 AND NOT (n1)-[:EMPLOYEE]->(n3)"
+          " MATCH (n1:Person) MATCH (n3:Company) WHERE ID(n3) = 6 AND NOT (n1)-[:EMPLOYEE]->(n3)"
           {"n1" {:ref-id "n1" :labels [:person]}
            "n3" {:ref-id "n3" :labels [:company]:id 6}}
           [{:ref-id "r2" :type :employee :from "n1" :to "n3" :exists false}]
 
-          "MATCH (n1:Person) MATCH (G__1:Company) WHERE ID(n1) = 53 AND NOT (n1)-[:EMPLOYEE]->(G__1)"
+          " MATCH (n1:Person) MATCH (G__1:Company) WHERE ID(n1) = 53 AND NOT (n1)-[:EMPLOYEE]->(G__1)"
           {"n1" {:ref-id "n1" :labels [:person] :id 53}}
           [{:from "n1" :type :employee :to {:labels [:company]} :exists false}]
           )))))

@@ -146,16 +146,16 @@
   (create-from-builder! runner rel builder/create-rel-query))
 
 (defn find-node
-  "Takes a Node representation and returns a single matching node"
-  [runner ^clojure.lang.APersistentMap node]
+  "Takes a Node Lookup representation and returns a single matching node"
+  [runner ^clojure.lang.APersistentMap {:keys [ref-id] :as node}]
   (->>
    (str (builder/lookup-node node true) " LIMIT 1")
    (execute! runner)
-   (map #(get % (:ref-id node)))
+   (map #(get % ref-id))
    first))
 
 (defn find-nodes
-  "Takes a Node representation and returns all matching nodes"
+  "Takes a Node Lookup representation and returns all matching nodes"
   [runner ^clojure.lang.APersistentMap node]
   (->>
    (builder/lookup-node node true)
@@ -183,9 +183,9 @@
   "Optimized function to create a whole graph within a transaction
 
   Format of the graph is:
-  :lookups - collection of neo4j lookup representations
-  :nodes - collection of neo4j node representations
-  :rels  - collection of neo4j relationship representations
+  :lookups - collection of neo4j Node Lookup representations
+  :nodes - collection of neo4j Node representations
+  :rels  - collection of neo4j Relationship representations
   :returns - collection of aliases to return from query"
   [runner ^clojure.lang.APersistentMap graph]
   (execute! runner (builder/create-graph-query graph)))
@@ -194,8 +194,8 @@
   "Lookups the nodes based on given relationships and returns specified entities
 
   Format of the graph is:
-  :nodes - collection of neo4j node representations
-  :rels  - collection of neo4j relationship representations
+  :nodes - collection of neo4j Node representations
+  :rels  - collection of neo4j Relationship representations
   :returns - collection of aliases to return from query"
   [runner ^clojure.lang.APersistentMap graph]
   (execute! runner (builder/get-graph-query graph)))
