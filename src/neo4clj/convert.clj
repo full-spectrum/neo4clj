@@ -10,25 +10,12 @@
            [org.neo4j.driver Record
                              Result]))
 
-;; Pattern used to recognize date-time values from Neo4J
-(def date-time-pattern #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}")
-
-(defn property->value
-  "Convert a given bolt property into its clojure equivalent"
-  [prop]
-  (if (and (string? prop) (re-find date-time-pattern prop))
-    (t/instant prop)
-    prop))
-
 (defn neo4j-entity-basics->clj
   "Convert a given Neo4J internal object into a hash-map with the basic entity informations"
   [^Entity entity]
   (hash-map :id (.id entity)
             :props (sanitize/clj-properties
-                    (specter/transform
-                     [MAP-VALS]
-                     property->value
-                     (into {} (.asMap entity))))))
+                    (into {} (.asMap entity)))))
 
 (defmulti neo4j->clj
   "Converts a Neo4J internal entity to a Clojure Hash-Map"
@@ -70,7 +57,11 @@
   [^Result result]
   (->> (iterator-seq result)
        (map (fn [^Record r] (.asMap r)))
-       (map #(reduce (fn [m [k v]] (assoc m k (assoc (neo4j->clj v) :ref-id k))) {} %))))
+       (map #(reduce (fn [m [k v]]
+                       (assoc m k (let [converted-v (neo4j->clj v)]
+                                    (if (map? converted-v)
+                                      (assoc converted-v :ref-id k)
+                                      converted-v)))) {} %))))
 
 (defn clj-value->neo4j-value
   "Convert a given clojure primitive into its bolt query equivalent
@@ -100,11 +91,21 @@
       (update :type sanitize/cypher-relation-type)
       (update :props hash-map->properties)))
 
+(defn clj-parameter->neo4j
+  "Convert a given clojure primitive into its bolt parameter equivalent
+  If given a vector or list, all elements within needs to be of the same type.
+  This is a limitation in Neo4j not Neo4clj"
+  [value]
+  (cond
+    (keyword? value) (name value)
+    (instance? java.time.Instant value) (java-time/zoned-date-time value "UTC")
+    :else value))
+
 (defn clj-parameters->neo4j
   "Convert a Clojure parameter map to a Neo4j parameter array"
   [^clojure.lang.IPersistentMap params]
   (->> params
-       clojure.walk/stringify-keys
        (mapcat identity)
+       (map clj-parameter->neo4j)
        (into-array Object)
        Values/parameters))
