@@ -125,9 +125,11 @@ Notice that dashes is not allowed in parameter names
 ## Node CRUD
 
 This section shows how to do basic CRUD operations on nodes through Neo4clj convenience functions.
-To learn more about the Clojure representation of a node please see our [representations](representations.md) page
+To learn more about the Clojure Node and Node Lookup representations please see our [representations](representations.md) page
 
 ### Create a Node
+
+The entry given to `create-node!` is a Node representation.
 
 ~~~clojure
 (client/create-node! conn {:ref-id "p"
@@ -138,7 +140,7 @@ To learn more about the Clojure representation of a node please see our [represe
 
 ### Find a single node in Neo4j
 
-The entry given to `find-node!` is a Node Lookup representation. To learn more about the Clojure Node Lookup representation see our [representations](representations.md) page
+The entry given to `find-node!` is a Node Lookup representation.
 
 ~~~clojure
 (client/find-node! conn {:ref-id "p"
@@ -150,7 +152,7 @@ Returns a single node representation if found or nil otherwise.
 
 ### Find nodes in Neo4j
 
-The entry given to `find-nodes!` is a lookup representation. To learn more about the Clojure lookup representation see our [representations](representations.md) page
+The entry given to `find-nodes!` is a lookup representation.
 
 ~~~clojure
 (client/find-nodes! conn {:ref-id "p"
@@ -161,7 +163,8 @@ The entry given to `find-nodes!` is a lookup representation. To learn more about
 
 ### Finding a node or nodes with given relationships
 
-It is possible to give a optional key :rels to a Node Lookup representation. To learn more about the Clojure lookup representation see our [representations](representations.md) page. If set the query will look for a given node where the given relationships exists.
+It is possible to give a optional key :rels to a Node Lookup representation.
+If set the query will look for a given node where the given relationships exists.
 
 ~~~clojure
 (client/find-nodes! conn {:ref-id "p"
@@ -197,7 +200,8 @@ The keys `from` and `to` are Lookup representations. To learn more about the Clo
 
 ### Find relationships in Neo4j
 
-The keys `from` and `to` are Lookup representations. To learn more about the Clojure representation of a lookup entry please see our [representations](representations.md) page
+The keys `from` and `to` are Lookup representations.
+To learn more about the Clojure representation of a lookup entry please see our [representations](representations.md) page
 
 ~~~clojure
 (client/find-relationship! conn {:ref-id "p"
