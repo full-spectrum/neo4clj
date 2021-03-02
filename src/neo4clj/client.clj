@@ -103,6 +103,13 @@
         (execute [~runner-alias]
           ~@body)))))
 
+(defn execute-read
+  ([^Connection conn ^String query]
+   (execute-read conn query {}))
+  ([^Connection conn ^String query ^clojure.lang.IPersistentMap params]
+   (with-read-only-conn conn tx
+     (java-interop/execute tx query params))))
+
 (defmacro with-write-conn
   "Create a managed write transaction with the name given as runner-alias and execute the
   body within the transaction.
@@ -115,6 +122,13 @@
       (proxy [TransactionWork] []
         (execute [~runner-alias]
           ~@body)))))
+
+(defn execute-write!
+  ([^Connection conn ^String query]
+   (execute-write! conn query {}))
+  ([^Connection conn ^String query ^clojure.lang.IPersistentMap params]
+   (with-write-conn conn tx
+     (java-interop/execute tx query params))))
 
 (defn create-index!
   "Creates an index on the given combination and properties"
