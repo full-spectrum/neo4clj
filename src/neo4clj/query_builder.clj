@@ -176,8 +176,10 @@
     :else entity))
 
 (defn ensure-rel-nodes-have-ref-id
-  [{:keys [from to] :as rel}]
-  (update (update rel :from ensure-ref-id) :to ensure-ref-id))
+  [rel]
+  (-> rel
+      (update :from ensure-ref-id)
+      (update :to ensure-ref-id)))
 
 (defn- lookup-graph-single-matches-and-wheres
   "Takes a list of node entries, known reference ids, relations to
