@@ -90,7 +90,7 @@
   ([^QueryRunner runner ^String query ^clojure.lang.IPersistentMap params]
    (java-interop/execute runner query params)))
 
-(defmacro with-read-conn
+(defmacro with-read-only-conn
   "Create a managed read transaction with the name given as runner-alias and execute the
   body within the transaction.
 

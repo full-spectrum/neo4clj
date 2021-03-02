@@ -1,5 +1,6 @@
 (ns user
-  (:require [neo4clj.client :as client]))
+  (:require [neo4clj.client :as client]
+            [criterium.core :as crit]))
 
 #_(def conn (client/connect "bolt://localhost:7687" "neo4j" "password"))
 
@@ -22,29 +23,29 @@
                                           :labels [:person]
                                           :props {:first-name "Agent" :last-name "Smith"}}))]
     (println "Nodes after creation:"
-             (count (client/with-read-conn conn tx
+             (count (client/with-read-only-conn conn tx
                       (client/find-nodes tx {:ref-id "n" :labels [:person]})))
              "- Expected 2")
     (let [rel (client/create-rel! conn {:ref-id "r" :type :enemy :props {:since "Forever"} :from {:ref-id "n1" :props {:first-name "Neo"}} :to node-2})]
       (println "Relationships after creation:"
-               (count (client/with-read-conn conn tx
+               (count (client/with-read-only-conn conn tx
                         (client/find-rels tx {:ref-id "r" :type :enemy})))
                 "- Expected 1")
       (client/delete-rel! conn rel)
       (println "Relationships after delete:"
-               (count (client/with-read-conn conn tx
+               (count (client/with-read-only-conn conn tx
                         (client/find-rels tx {:ref-id "r" :type :enemy})))
                 "- Expected 0")
       (client/delete-node! conn {:labels [:person]})
       (println "Nodes after delete:"
-               (count (client/with-read-conn conn tx
+               (count (client/with-read-only-conn conn tx
                         (client/find-nodes tx {:ref-id "n" :labels [:person]})))
                 "- Expected 0"))))
 
 (defn test-write-exception
   [conn]
   (println "Nodes before creation:"
-           (count (client/with-read-conn conn tx
+           (count (client/with-read-only-conn conn tx
                     (client/find-nodes tx {:ref-id "n"})))
             "- Expected 0")
   (try
@@ -58,14 +59,14 @@
                                :props {:first-name "Agent" :last-name "Smith"}}))
     (catch Exception e (str "Nothing")))
   (println "Nodes after exception:"
-           (count (client/with-read-conn conn tx
+           (count (client/with-read-only-conn conn tx
                     (client/find-nodes tx {:ref-id "n"})))
             "- Expected 0"))
 
 (defn test-transaction
   [conn]
   (println "Nodes before creation:"
-           (count (client/with-read-conn conn tx
+           (count (client/with-read-only-conn conn tx
                     (client/find-nodes tx {:ref-id "n"})))
             "- Expected 0")
   (client/with-transaction conn tx
@@ -73,23 +74,23 @@
                              :labels [:person]
                              :props {:first-name "Neo" :last-name "Anderson"}}))
   (println "Nodes after transaction:"
-           (count (client/with-read-conn conn tx
+           (count (client/with-read-only-conn conn tx
                     (client/find-nodes tx {:ref-id "n"})))
             "- Expected 1")
   (client/delete-node! conn {:ref-id "n"})
   (println "Nodes after delete:"
-           (count (client/with-read-conn conn tx
+           (count (client/with-read-only-conn conn tx
                     (client/find-nodes tx {:ref-id "n"})))
             "- Expected 0"))
 
 (defn test-graph
   [conn]
   (println "Nodes before creation:"
-           (count (client/with-read-conn conn tx
+           (count (client/with-read-only-conn conn tx
                     (client/find-nodes tx {:ref-id "n"})))
             "- Expected 0")
   (println "Relationships before creation:"
-           (count (client/with-read-conn conn tx
+           (count (client/with-read-only-conn conn tx
                     (client/find-rels tx {:ref-id "r"})))
             "- Expected 0")
   (let [node-1 (client/create-node! conn {:ref-id "n1"
@@ -110,14 +111,14 @@
                                       {:ref-id "r4" :from node-1 :to node-4 :type :friend}]
                                :returns [node-1 node-2 node-3 node-4]})))
     (println "Nodes after creation:"
-             (count (client/with-read-conn conn tx
+             (count (client/with-read-only-conn conn tx
                       (client/find-nodes tx {:ref-id "n"})))
               "- Expected 4")
     (println "Relationships after creation:"
-             (count (client/with-read-conn conn tx
+             (count (client/with-read-only-conn conn tx
                       (client/find-rels tx {:ref-id "r"})))
               "- Expected 4")
-    (client/with-read-conn conn tx
+    (client/with-read-only-conn conn tx
       (client/get-graph tx {:nodes [{:ref-id "n1" :labels [:machine]}
                                     {:ref-id "n2" :labels [:person]}
                                     {:ref-id "n3" :labels [:person]}]
@@ -128,11 +129,11 @@
     (client/delete-rel! conn {:ref-id "r"})
     (client/delete-node! conn {:ref-id "n"})
     (println "Nodes after delete:"
-             (count (client/with-read-conn conn tx
+             (count (client/with-read-only-conn conn tx
                       (client/find-nodes tx {:ref-id "n"})))
               "- Expected 0")
     (println "Relationships after delete:"
-             (count (client/with-read-conn conn tx
+             (count (client/with-read-only-conn conn tx
                       (client/find-rels tx {:ref-id "r"})))
               "- Expected 0")))
 
