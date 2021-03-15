@@ -1,5 +1,6 @@
 (ns neo4clj.convert
   (:require [clojure.string :as str]
+            [clojure.walk :as walk]
             [com.rpl.specter :as specter :refer [MAP-VALS]]
             [neo4clj.sanitize :as sanitize]
             [java-time :as t])
@@ -105,7 +106,7 @@
   "Convert a Clojure parameter map to a Neo4j parameter array"
   [^clojure.lang.IPersistentMap params]
   (->> params
+       (walk/postwalk clj-parameter->neo4j)
        (mapcat identity)
-       (map clj-parameter->neo4j)
        (into-array Object)
        Values/parameters))
