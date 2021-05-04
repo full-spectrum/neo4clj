@@ -38,7 +38,11 @@
   [^java.lang.Long entity]
   entity)
 
-(defmethod neo4j->clj java.util.Collections$UnmodifiableMap
+(defmethod neo4j->clj java.util.List
+  [entity]
+  (into [] entity))
+
+(defmethod neo4j->clj java.util.Map
   [entity]
   (into {} entity))
 

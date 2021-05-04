@@ -77,6 +77,7 @@
       {"a" 1 "b" 2} (java.util.Collections/unmodifiableMap (doto (java.util.Hashtable. )
                                                              (.put "a" 1)
                                                              (.put "b" 2)))
+      ["Test Value"] (java.util.Collections/singletonList "Test Value")
       {:id 1 :labels [:person] :props {:first-name "Neo" :last-name "Anderson"}} neo4j-node
       {:id 4 :type :employee :start-id 4 :end-id 11 :props {:hired-at 2008 :position "Technician"}} neo4j-relationship
       '({"n" {:id 1 :ref-id "n" :labels [:person] :props {:first-name "Neo" :last-name "Anderson"}}
