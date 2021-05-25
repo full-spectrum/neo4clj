@@ -69,6 +69,7 @@ Create and delete indexes
 | 1.0.0-ALPHA3   |  1.10.0 |             4.2.0 |        4.2.x |
 | 1.0.0-ALPHA4   |  1.10.0 |             4.2.0 |        4.2.x |
 | 1.0.0-ALPHA5   |  1.10.0 |             4.2.0 |        4.2.x |
+| 1.0.0-ALPHA6   |  1.10.3 |             4.2.5 |        4.2.x |
 
 
 ## Acknowledgements
