@@ -22,8 +22,22 @@
                "age" 45
                "married" false
                "have-girlfriend" true
-               "friends" ["Morpheus" "Trinity"]
+               "friends" (doto (java.util.ArrayList.)
+                                (.add "Morpheus")
+                                (.add "Trinity"))
                "escaped" (time/with-zone (time/zoned-date-time 1999 3 31 0 0 0) "UTC")})))
+
+(def neo4j-nested-nodes
+  "Mock object to represent a Neo4J Result with a collection of Nodes"
+  (doto (java.util.ArrayList.)
+    (.add neo4j-node)
+    (.add (proxy [org.neo4j.driver.types.Node] []
+            (id [] 3)
+            (labels [] ["Person"])
+            (asMap [] {"firstName" "Morpheus"
+                       "friends" (doto (java.util.ArrayList.)
+                                   (.add "Neo")
+                                   (.add "Trinity"))})))))
 
 (def neo4j-relationship
   "Mock object to represent a Neo4J Relationship"
@@ -35,22 +49,21 @@
     (asMap [] {"hiredAt" 2008
                "position" "Technician"})))
 
-(def neo4j-record
-  "Mock object to represent a Neo4J Record containing two Nodes"
+(defn neo4j-record-factory
+  "Factory to generate a mock object to represent a Neo4J Record"
+  [record-map]
   (proxy [org.neo4j.driver.Record] []
-    (asMap [] {"n" neo4j-node "r" neo4j-relationship "t.value" 45})))
+    (asMap [] record-map)))
 
-(def statement-result
-  "Atom used for the iterator functionality of StatementResult below"
-  (atom nil))
-
-(def neo4j-statement-result
-  "Mock object to represent a Neo4J StatementResult"
-  (proxy [org.neo4j.driver.Result] []
-    (hasNext [] (not (empty? @statement-result)))
-    (next [] (let [v (first @statement-result)]
-               (swap! statement-result pop)
-               v))))
+(defn neo4j-statement-result-factory
+  "Factory to generate a mock object to represent a Neo4J StatementResult"
+  [& record-maps]
+  (let [statement-result (atom (mapv neo4j-record-factory record-maps))]
+    (proxy [org.neo4j.driver.Result] []
+      (hasNext [] (not (empty? @statement-result)))
+      (next [] (let [v (first @statement-result)]
+                 (swap! statement-result pop)
+                 v)))))
 
 (t/deftest neo4j-entity-basics->clj
   (t/testing "Convert basic Neo4j entity to a Clojure map"
@@ -70,19 +83,29 @@
 (t/deftest neo4j->clj
   (t/testing "Convert a Neo4j entity to its Clojure equivalent"
     (t/are [clj-representation neo4j-entity]
-        (do (reset! statement-result [neo4j-record])
-            (= clj-representation (sut/neo4j->clj neo4j-entity)))
+        (= clj-representation (sut/neo4j->clj neo4j-entity))
       "Anderson" (java.lang.String. "Anderson")
+
       123456789 (java.lang.Long. 123456789)
+
       {"a" 1 "b" 2} (java.util.Collections/unmodifiableMap (doto (java.util.Hashtable. )
                                                              (.put "a" 1)
                                                              (.put "b" 2)))
+
       ["Test Value"] (java.util.Collections/singletonList "Test Value")
+
       {:id 1 :labels [:person] :props {:first-name "Neo" :last-name "Anderson"}} neo4j-node
+
       {:id 4 :type :employee :start-id 4 :end-id 11 :props {:hired-at 2008 :position "Technician"}} neo4j-relationship
+
       '({"n" {:id 1 :ref-id "n" :labels [:person] :props {:first-name "Neo" :last-name "Anderson"}}
          "r" {:id 4 :ref-id "r" :type :employee :start-id 4 :end-id 11 :props {:hired-at 2008 :position "Technician"}}
-         "t.value" 45}) neo4j-statement-result)))
+         "t.value" 45})
+      (neo4j-statement-result-factory {"n" neo4j-node "r" neo4j-relationship "t.value" 45})
+
+      '({"c" [{:id 1 :labels [:person] :props {:first-name "Neo" :last-name "Anderson"}}
+              {:id 3 :labels [:person] :props {:first-name "Morpheus" :friends ["Neo" "Trinity"]}}]})
+      (neo4j-statement-result-factory {"c" neo4j-nested-nodes}))))
 
 (t/deftest clj-value->neo4j-value
   (t/testing "Convert Clojure property to its Neo4j equivalent"
