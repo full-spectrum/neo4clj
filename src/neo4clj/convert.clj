@@ -26,18 +26,6 @@
   [entity]
   nil)
 
-(defmethod neo4j->clj java.lang.String
-  [^java.lang.String entity]
-  entity)
-
-(defmethod neo4j->clj String
-  [^String entity]
-  entity)
-
-(defmethod neo4j->clj java.lang.Long
-  [^java.lang.Long entity]
-  entity)
-
 (defmethod neo4j->clj java.util.List
   [entity]
   (into [] entity))
@@ -66,7 +54,12 @@
                        (assoc m k (let [converted-v (neo4j->clj v)]
                                     (if (map? converted-v)
                                       (assoc converted-v :ref-id k)
-                                      converted-v)))) {} %))))
+                                      converted-v)))) {} %))
+       (walk/prewalk neo4j->clj)))
+
+(defmethod neo4j->clj :default
+  [entity]
+  entity)
 
 (defn clj-value->neo4j-value
   "Convert a given clojure primitive into its bolt query equivalent
