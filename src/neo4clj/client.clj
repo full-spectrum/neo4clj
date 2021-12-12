@@ -31,6 +31,7 @@
 (defn create-session
   "Create a new session on the given Neo4J connection"
   (^Session [^Connection {:keys [driver database] :as conn}]
+   (assert (instance? Driver driver) "Neo4J driver not provided - check DB connection.")
    (if database
      (.session driver (SessionConfig/forDatabase database))
      (.session driver))))
