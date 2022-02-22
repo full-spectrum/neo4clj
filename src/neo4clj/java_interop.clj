@@ -20,7 +20,7 @@
 
 (defn set-encryption
   "Convenience function to determine wheter or not to use encryption"
-  [^Config$ConfigBuilder builder encrypted]
+  ^Config$ConfigBuilder [^Config$ConfigBuilder builder encrypted]
   (if encrypted
     (.withEncryption builder)
     (.withoutEncryption builder)))

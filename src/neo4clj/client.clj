@@ -26,15 +26,15 @@
 (defn disconnect
   "Disconnect the given connection"
   [^Connection conn]
-  (.close (:driver conn)))
+  (.close ^Driver (:driver conn)))
 
 (defn create-session
   "Create a new session on the given Neo4J connection"
   (^Session [^Connection {:keys [driver database] :as conn}]
    (assert (instance? Driver driver) "Neo4J driver not provided - check DB connection.")
    (if database
-     (.session driver (SessionConfig/forDatabase database))
-     (.session driver))))
+     (.session ^Driver driver (SessionConfig/forDatabase database))
+     (.session ^Driver driver))))
 
 (defmacro with-session
   "Creates a session with the given name on the given connection and executes the body

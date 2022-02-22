@@ -101,7 +101,7 @@
 
 (defn clj-parameters->neo4j
   "Convert a Clojure parameter map to a Neo4j parameter array"
-  [^clojure.lang.IPersistentMap params]
+  ^Record [^clojure.lang.IPersistentMap params]
   (->> params
        (walk/postwalk clj-parameter->neo4j)
        (mapcat identity)
