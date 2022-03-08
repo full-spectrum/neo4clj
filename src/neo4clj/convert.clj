@@ -1,7 +1,6 @@
 (ns neo4clj.convert
   (:require [clojure.string :as str]
             [clojure.walk :as walk]
-            [com.rpl.specter :as specter :refer [MAP-VALS]]
             [neo4clj.sanitize :as sanitize]
             [java-time :as t])
   (:import [org.neo4j.driver Record
