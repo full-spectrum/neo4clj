@@ -5,7 +5,6 @@
             :url "http://opensource.org/licenses/MIT"}
   :dependencies [[camel-snake-kebab "0.4.2"]
                  [clojure.java-time "0.3.2"]
-                 [com.rpl/specter "1.1.3"]
                  [org.clojure/clojure "1.10.3"]
                  [org.neo4j.driver/neo4j-java-driver "4.4.3"]]
   :profiles {:dev {:dependencies [[org.clojure/tools.namespace "1.1.0"]
