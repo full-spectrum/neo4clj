@@ -12,5 +12,4 @@ jobs:
           paths:
             - ~/.m2
           key: neo4clj-{{ checksum "project.clj" }}
-      - run: export _JAVA_OPTIONS="-Xms1024m -Xmx2G -Xss256m"
       - run: lein test
