@@ -4,12 +4,13 @@
             [com.rpl.specter :as specter :refer [MAP-VALS]]
             [neo4clj.sanitize :as sanitize]
             [java-time :as t])
-  (:import [org.neo4j.driver Values]
+  (:import [org.neo4j.driver Record
+                             Result
+                             Values]
            [org.neo4j.driver.types Entity
                                    Node
                                    Relationship]
-           [org.neo4j.driver Record
-                             Result]))
+           [org.neo4j.driver.internal.value MapValue]))
 
 (defn neo4j-entity-basics->clj
   "Convert a given Neo4J internal object into a hash-map with the basic entity informations"
@@ -101,7 +102,7 @@
 
 (defn clj-parameters->neo4j
   "Convert a Clojure parameter map to a Neo4j parameter array"
-  ^Record [^clojure.lang.IPersistentMap params]
+  ^MapValue [^clojure.lang.IPersistentMap params]
   (->> params
        (walk/postwalk clj-parameter->neo4j)
        (mapcat identity)

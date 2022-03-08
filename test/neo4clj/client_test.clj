@@ -55,15 +55,16 @@
     (test-utils/with-db conn {:initial-data ["CREATE (n:TestNode {name: 'Neo'}) RETURN n"]}
       (t/is (= [{"properties" ["name"] "labelsOrTypes" ["TestNode"]}]
                (map #(select-keys % ["properties" "labelsOrTypes"])
-                    (do (sut/create-index! conn :test-node [:name])
-                        (sut/execute! conn "CALL db.indexes"))))))))
+                    (filter #(= (get % "labelsOrTypes") ["TestNode"])
+                            (do (sut/create-index! conn :test-node [:name])
+                                (sut/execute! conn "CALL db.indexes")))))))))
 
 (t/deftest drop-index!
   (t/testing "Drop index on a Neo4j node property"
     (test-utils/with-db conn {:initial-data ["CREATE INDEX ON :TestNode(name)"]}
-      (t/is (= []
-               (do (sut/drop-index! conn :test-node [:name])
-                   (sut/execute! conn "CALL db.indexes")))))))
+      (t/is (empty? (filter #(= (get % "labelsOrTypes") ["TestNode"])
+                            (do (sut/drop-index! conn :test-node [:name])
+                                (sut/execute! conn "CALL db.indexes"))))))))
 
 (t/deftest create-node!
   (t/testing "Create a Neo4j node though builder"
@@ -110,8 +111,8 @@
 (t/deftest find-rels
   (t/testing "Find collection of Neo4j nodes"
     (test-utils/with-db conn {:initial-data ["CREATE (:TestNode {name: 'Neo'})-[:FRIENDS {since: 1999}]->(:TestNode {name: 'Trinity'})<-[:FRIENDS {since: 1999}]-(:TestNode {name: 'Morpheus'})"]}
-      (t/is (= [{:end-id 1 :type :friends :start-id 2 :id 1 :ref-id "r" :props {:since 1999}}
-                {:end-id 1 :type :friends :start-id 0 :id 0 :ref-id "r" :props {:since 1999}}]
+      (t/is (= [{:end-id 1 :type :friends :start-id 0 :id 0 :ref-id "r" :props {:since 1999}}
+                {:end-id 1 :type :friends :start-id 2 :id 1 :ref-id "r" :props {:since 1999}}]
                (sut/find-rels conn {:ref-id "r" :type :friends}))))))
 
 (t/deftest create-graph!
