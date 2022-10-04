@@ -1,4 +1,6 @@
-/target
-/.nrepl-port
-/.lein*
-/pom.xml
+target
+.nrepl-port
+.lein*
+pom.xml*
+docker-compose.yml
+data
