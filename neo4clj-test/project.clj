@@ -1,4 +1,4 @@
-(defproject fullspectrum/neo4clj-test "1.0.0-ALPHA7"
+(defproject full-spectrum/neo4clj-test "1.0.0-ALPHA7"
   :description "Neo4j test library"
   :url "https://github.com/full-spectrum/neo4clj"
   :license {:name "The MIT License"
