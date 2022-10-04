@@ -1,4 +1,4 @@
-(defproject full-spectrum/neo4clj-core "1.0.0-ALPHA7"
+(defproject full-spectrum/neo4clj-core "1.0.0"
   :description "Neo4j core library and client"
   :url "https://github.com/full-spectrum/neo4clj"
   :license {:name "The MIT License"
@@ -11,4 +11,4 @@
   :profiles {:dev {:dependencies [[org.clojure/tools.namespace "1.1.0"]
                                   [criterium "0.4.6"]]
                    :source-paths ["dev"]}
-             :test {:dependencies [[full-spectrum/neo4clj-test "1.0.0-ALPHA7"]]}})
+             :test {:dependencies [[full-spectrum/neo4clj-test "1.0.0"]]}})
