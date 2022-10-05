@@ -7,7 +7,7 @@ Neo4clj is a idomatic clojure client, exclusivly using [Bolt](https://boltprotoc
 Add the following dependency to `project.clj`:
 
 ```
-[fullspectrum/neo4clj "1.0.0-ALPHA7"]
+[com.github.full-spectrum/neo4clj-core "1.0.0"]
 ```
 
 [![Clojars Project](https://img.shields.io/clojars/v/fullspectrum/neo4clj.svg)](https://clojars.org/fullspectrum/neo4clj)
