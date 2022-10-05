@@ -58,6 +58,38 @@ Create, read, update and delete relationships
 Create and read a complete graph
 Create and delete indexes
 
+## Test utilities
+
+It is possible to write unit tests for Neo4clj executions, using our test utilities.
+
+### Installation
+
+Add the following dependency to `project.clj` under your test profile:
+
+```
+[com.github.full-spectrum/neo4clj-test "1.0.0"]
+```
+
+### Usage
+
+In your test namespace you need to require the test-utils as such:
+
+```
+(:require [neo4clj.test-utils :as test-utils])
+```
+
+Then when writing a test requiring a Neo4j database you can initialize an in-memory database as follows:
+
+```
+(test-utils/with-db conn {:initial-data ["CREATE (n:TestNode) RETURN n"]}
+  ;; Your code here
+  )
+```
+
+The variable conn can be used in all calls to neo4clj client calls requiring a neo4j connection.
+
+The :initial-data key value is a vector of Cypher strings, these Cypher strings are run when
+the database is created.
 
 ## Version matrix
 
