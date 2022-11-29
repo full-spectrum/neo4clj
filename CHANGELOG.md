@@ -1,6 +1,11 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 1.0.1 (2022-11-29)
+
+* Updated syntax for the with-db test-util function
+* Add support for alternative port and host for the in-memory database
+
 ## 1.0.0 (2022-10-04)
 
 * Update Neo4j driver to version 4.4.9
