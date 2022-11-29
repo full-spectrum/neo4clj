@@ -1,16 +1,13 @@
 # Neo4J Clojure client
 
-Neo4clj is a idomatic clojure client, exclusivly using [Bolt](https://boltprotocol.org) for performance.
+Neo4clj is an idiomatic Clojure client, exclusively using [Bolt](https://boltprotocol.org) for performance.
+
 
 ## Installation
 
 Add the following dependency to `project.clj`:
 
-```
-[com.github.full-spectrum/neo4clj-core "1.0.0"]
-```
-
-[![Clojars Project](https://img.shields.io/clojars/v/fullspectrum/neo4clj.svg)](https://clojars.org/fullspectrum/neo4clj)
+[![Clojars Project](https://img.shields.io/clojars/v/com.github.full-spectrum/neo4clj-core.svg)](https://clojars.org/com.github.full-spectrum/neo4clj-core)
 
 
 # Getting started
@@ -34,14 +31,17 @@ Add the following dependency to `project.clj`:
 (client/disconnect connection)
 ~~~
 
+
 # Clojure representations
 
 Neo4clj uses Clojure maps to represent Nodes and Relationships.
 To learn more please see [Clojure Representations](docs/representations.md)
 
+
 # Examples
 
 To learn more about how to use Neo4clj please take a look at our [examples](docs/examples.md)
+
 
 # Supported Features
 
@@ -51,59 +51,63 @@ Neo4clj supports the following features via the Bolt Protocol:
 * Sessions
 * Transactions
 
-Neo4clj also supports the following operations through idomatic functions:
+Neo4clj also supports the following operations through idiomatic functions:
 
-Create, read, update and delete nodes
-Create, read, update and delete relationships
-Create and read a complete graph
-Create and delete indexes
+- Create, read, update and delete nodes
+- Create, read, update and delete relationships
+- Create and read a complete graph
+- Create and delete indexes
 
-## Test utilities
+
+# Test utilities
 
 It is possible to write unit tests for Neo4clj executions, using our test utilities.
 
-### Installation
+
+## Installation
 
 Add the following dependency to `project.clj` under your test profile:
 
-```
-[com.github.full-spectrum/neo4clj-test "1.0.0"]
-```
+[![Clojars Project](https://img.shields.io/clojars/v/com.github.full-spectrum/neo4clj-test.svg)](https://clojars.org/com.github.full-spectrum/neo4clj-test)
 
-### Usage
 
-In your test namespace you need to require the test-utils as such:
+## Usage
 
-```
+Require the test utils in your test namespace:
+
+```clojure
 (:require [neo4clj.test-utils :as test-utils])
 ```
 
-Then when writing a test requiring a Neo4j database you can initialize an in-memory database as follows:
+Then initialize an in-memory Neo4J database using `with-db`:
 
-```
+```clojure
 (test-utils/with-db conn {:initial-data ["CREATE (n:TestNode) RETURN n"]}
-  ;; Your code here
+  ;; Your test code here
+  (client/execute! conn "MATCH (n:TestNode) RETURN n")
   )
 ```
 
-The variable conn can be used in all calls to neo4clj client calls requiring a neo4j connection.
+The symbol `conn` contains the Neo4J DB connection and can be used in all neo4clj client calls.
 
-The :initial-data key value is a vector of Cypher strings, these Cypher strings are run when
-the database is created.
+The `:initial-data` key value is a vector of Cypher strings, these Cypher strings
+are run when the database is created.
+
 
 ## Version matrix
 
 | Neo4clj        | Clojure | `neo-java-driver` | Neo4j Server |
 | -------------- | ------- | ----------------- | ------------ |
-| 1.0.0-SNAPSHOT |  1.10.0 |             1.7.2 |        3.5.x |
-| 1.0.0-ALPHA1   |  1.10.0 |             4.2.0 |        4.2.x |
-| 1.0.0-ALPHA2   |  1.10.0 |             4.2.0 |        4.2.x |
-| 1.0.0-ALPHA3   |  1.10.0 |             4.2.0 |        4.2.x |
-| 1.0.0-ALPHA4   |  1.10.0 |             4.2.0 |        4.2.x |
-| 1.0.0-ALPHA5   |  1.10.0 |             4.2.0 |        4.2.x |
-| 1.0.0-ALPHA6   |  1.10.3 |             4.2.5 |        4.2.x |
-| 1.0.0-ALPHA7   |  1.10.3 |             4.4.3 |        4.4.x |
+| 1.0.1          |  1.11.1 |             4.4.9 |        4.4.x |
 | 1.0.0          |  1.11.1 |             4.4.9 |        4.4.x |
+| 1.0.0-ALPHA7   |  1.10.3 |             4.4.3 |        4.4.x |
+| 1.0.0-ALPHA6   |  1.10.3 |             4.2.5 |        4.2.x |
+| 1.0.0-ALPHA5   |  1.10.0 |             4.2.0 |        4.2.x |
+| 1.0.0-ALPHA4   |  1.10.0 |             4.2.0 |        4.2.x |
+| 1.0.0-ALPHA3   |  1.10.0 |             4.2.0 |        4.2.x |
+| 1.0.0-ALPHA2   |  1.10.0 |             4.2.0 |        4.2.x |
+| 1.0.0-ALPHA1   |  1.10.0 |             4.2.0 |        4.2.x |
+| 1.0.0-SNAPSHOT |  1.10.0 |             1.7.2 |        3.5.x |
 
 
 ## Acknowledgements
