@@ -7,12 +7,15 @@
            [java.nio.file Path Files]))
 
 (defmacro with-db
-  [conn {:keys [file-uri initial-data]} & body]
+  [[conn {:keys [file-uri initial-data host port]}] & body]
   `(let [path# (if ~file-uri
                  (Path/of (java.net.URI. ~file-uri))
                  (Files/createTempDirectory nil (into-array java.nio.file.attribute.FileAttribute [])))
+         host# (or ~host "localhost")
+         port# (or ~port 17687)
          service# (-> (DatabaseManagementServiceBuilder. path#)
                       (.setConfig BoltConnector/enabled true)
+                      (.setConfig BoltConnector/listen_address (org.neo4j.configuration.helpers.SocketAddress. host# port#))
                       (.build))]
      (try
        (let [tx# (-> service#
@@ -21,7 +24,7 @@
          (doseq [cypher# ~initial-data]
            (.execute tx# cypher#))
          (.commit tx#)
-         (let [~conn (neo4j/connect "bolt://localhost:7687")]
+         (let [~conn (neo4j/connect (str "bolt://" host# ":" port#))]
            ~@body))
        (finally
          (.shutdown service#)
