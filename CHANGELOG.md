@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 1.1.0 (2023-01-24)
+
+* Updated core and test to use Neo4J 5.3.0 Java driver
+
 ## 1.0.1 (2022-11-29)
 
 * Updated syntax for the with-db test-util function
