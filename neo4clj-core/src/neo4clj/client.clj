@@ -133,13 +133,13 @@
 
 (defn create-index!
   "Creates an index on the given combination and properties"
-  [runner label prop-keys]
-  (execute! runner (builder/index-query "CREATE" label prop-keys)))
+  [runner alias label prop-keys]
+  (execute! runner (builder/create-index-query alias label prop-keys)))
 
 (defn drop-index!
   "Delete an index on the given combination and properties"
-  [runner label prop-keys]
-  (execute! runner (builder/index-query "DROP" label prop-keys)))
+  [runner alias]
+  (execute! runner (builder/drop-index-query alias)))
 
 (defn create-from-builder!
   "Helper function to execute a specific query builder string and return the results"
