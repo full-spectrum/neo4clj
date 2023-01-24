@@ -42,11 +42,16 @@
   [rel return?]
   (lookup cypher/lookup-relationship rel return?))
 
-(defn index-query
-  "Creates a query to modify index, allowed operations are: CREATE, DROP"
-  [operation label prop-keys]
-  (str operation " INDEX ON :" (sanitize/cypher-label label) "("
-       (str/join ", " (map sanitize/cypher-property-key prop-keys)) ")"))
+(defn create-index-query
+  "Creates a query to create a aliased index."
+  [alias label prop-keys]
+  (str "CREATE INDEX " alias " FOR (n:" (sanitize/cypher-label label) ") ON ("
+       (str/join ", " (map #(str "n." (sanitize/cypher-property-key %)) prop-keys)) ")"))
+
+(defn drop-index-query
+  "Creates a query to drop a aliased index."
+  [alias]
+  (str "DROP INDEX " alias))
 
 (defn- lookup-non-referred-node [ref-id node]
   "Creates a query to lookup a node and refers it as given ref-id"

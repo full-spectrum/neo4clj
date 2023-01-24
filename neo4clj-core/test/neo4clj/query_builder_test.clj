@@ -66,14 +66,15 @@
         "MATCH (G__123)-[G__234:ENEMY]->(G__345) WHERE ID(G__234) = 4" rel false
         "MATCH (G__123)-[G__234:ENEMY]->(G__345) WHERE ID(G__234) = 4 RETURN G__234" rel true))))
 
+(t/deftest create-index-query
+  (t/testing "Cypher to create a index"
+    (t/is (= "CREATE INDEX phoneIndex FOR (n:Phone) ON (n.number)"
+             (sut/create-index-query "phoneIndex" :phone [:number])))))
 
-(t/deftest index-query
-  (t/testing "Cypher to create/delete a index"
-    (let [expected-cypher " INDEX ON :Phone(number)"]
-      (t/are [operation]
-          (= (str operation expected-cypher) (sut/index-query operation :phone [:number]))
-        "CREATE"
-        "DROP"))))
+(t/deftest drop-index-query
+  (t/testing "Cypher to delete a index"
+    (t/is (= "DROP INDEX phoneIndex"
+             (sut/drop-index-query "phoneIndex")))))
 
 (t/deftest create-rel-query
   (let [next-gensym (atom 0)]

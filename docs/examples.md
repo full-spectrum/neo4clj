@@ -363,31 +363,26 @@ To help handling index creation and drops, we have added convenience functions f
 
 ### Create index
 
-Create an index on a single property
+Create an index name firstNameIndex on a single property
 
 ~~~clojure
-(client/create-index! conn :person [:first-name])
+(client/create-index! conn "firstNameIndex" :person [:first-name])
 ~~~
 
-Create an index across multiple properties
+Create an index named nameIndex across multiple properties
 
 ~~~clojure
-(client/create-index! conn :person [:first-name :last-name])
+(client/create-index! conn "nameIndex" :person [:first-name :last-name])
 ~~~
 
 ### Drop index
 
-Drop an index on a single property
+Drop an index named firstNameIndex
 
 ~~~clojure
-(client/drop-index! conn :person [:first-name])
+(client/drop-index! conn "firstNameIndex")
 ~~~
 
-Drop an index across multiple properties
-
-~~~clojure
-(client/drop-index! conn :person [:first-name :last-name])
-~~~
 
 ## Sessions and Transactions
 

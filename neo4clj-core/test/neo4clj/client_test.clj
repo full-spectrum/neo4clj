@@ -56,15 +56,15 @@
       (t/is (= [{"properties" ["name"] "labelsOrTypes" ["TestNode"]}]
                (map #(select-keys % ["properties" "labelsOrTypes"])
                     (filter #(= (get % "labelsOrTypes") ["TestNode"])
-                            (do (sut/create-index! conn :test-node [:name])
-                                (sut/execute! conn "CALL db.indexes")))))))))
+                            (do (sut/create-index! conn "testIndex" :test-node [:name])
+                                (sut/execute! conn "SHOW INDEXES")))))))))
 
 (t/deftest drop-index!
   (t/testing "Drop index on a Neo4j node property"
-    (test-utils/with-db [conn {:initial-data ["CREATE INDEX ON :TestNode(name)"]}]
+    (test-utils/with-db [conn {:initial-data ["CREATE INDEX testIndex FOR (n:TestNode) ON (n.name)"]}]
       (t/is (empty? (filter #(= (get % "labelsOrTypes") ["TestNode"])
-                            (do (sut/drop-index! conn :test-node [:name])
-                                (sut/execute! conn "CALL db.indexes"))))))))
+                            (do (sut/drop-index! conn "testIndex")
+                                (sut/execute! conn "SHOW INDEXES"))))))))
 
 (t/deftest create-node!
   (t/testing "Create a Neo4j node though builder"
