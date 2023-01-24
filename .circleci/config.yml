@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/clojure:openjdk-11-lein-2.9.8
+      - image: clojure:temurin-17-lein-2.10.0-alpine
     steps:
       - checkout
       - restore_cache:
