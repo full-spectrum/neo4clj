@@ -53,5 +53,5 @@
   "Runs the given query with optional parameters on the given Neo4J session/transaction"
   ([^QueryRunner runner ^String query]
    (execute runner query {}))
-  ([^QueryRunner runner ^String query ^Map params]
-   (doall (convert/neo4j->clj (.run runner query (convert/clj-parameters->neo4j params))))))
+  ([^QueryRunner runner ^String query ^Map params ^Map {:keys [enforce-utc]}]
+   (doall (convert/neo4j->clj (.run runner query (convert/clj-parameters->neo4j params enforce-utc)) enforce-utc))))

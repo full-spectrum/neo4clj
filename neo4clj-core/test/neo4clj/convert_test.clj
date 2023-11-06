@@ -119,7 +119,8 @@
       "'key'" :key
       "['test', 'something', 'else']" ["test" "something" "else"]
       "['else', 'something', 'test']" #{"test" "something" "else"}
-      "datetime(\"2018-04-28T12:53:11Z\")" (time/instant "2018-04-28T12:53:11Z"))))
+      "datetime(\"2018-04-28T12:53:11Z\")" (time/instant "2018-04-28T12:53:11Z")
+      "datetime(\"2018-04-28T12:53:11Z\")" (time/instant "2018-04-28T13:53:11+01:00"))))
 
 (t/deftest hash-map->properties
   (t/testing "Convert Clojure properties map to a sanitized Neo4j properties map"
@@ -150,8 +151,15 @@
 
 (t/deftest clj-parameters->neo4j
   (t/testing "Convert a collection of Clojure values into Neo4J parameter friendly values"
-    (t/are [neo4j-rel clj-rel]
-        (= neo4j-rel (sut/clj-parameters->neo4j clj-rel))
+    (t/are [neo4j-map clj-map enforce-utc]
+        (= neo4j-map (sut/clj-parameters->neo4j clj-map enforce-utc))
+
       (org.neo4j.driver.Values/parameters
-       (into-array Object ["date" (java-time/with-zone (java-time/zoned-date-time 2018 4 28 12 53 11) "UTC") "number" 45 "title" "keyword" "true" true "false" false "non-existent" nil "collection" [1 2 3]]))
-      {:date (time/instant "2018-04-28T12:53:11Z") :number 45 "title" :keyword "true" true "false" false :non-existent nil "collection" [1 2 3]})))
+       (into-array Object ["date" "datetime(\"2018-04-28T12:53:11Z\")" "number" 45 "title" "keyword" "true" true "false" false "non-existent" nil "collection" [1 2 3]]))
+      {:date (time/zoned-date-time "2018-04-28T13:53:11+01:00") :number 45 "title" :keyword "true" true "false" false :non-existent nil "collection" [1 2 3]}
+      true
+
+      (org.neo4j.driver.Values/parameters
+       (into-array Object ["date" "datetime(\"2018-04-28T13:53:11+01:00\")" "number" 45 "title" "keyword" "true" true "false" false "non-existent" nil "collection" [1 2 3]]))
+      {:date (time/zoned-date-time "2018-04-28T13:53:11+01:00") :number 45 "title" :keyword "true" true "false" false :non-existent nil "collection" [1 2 3]}
+      false)))

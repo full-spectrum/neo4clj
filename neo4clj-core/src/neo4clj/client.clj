@@ -5,7 +5,20 @@
             [neo4clj.query-builder :as builder])
   (:import  [org.neo4j.driver Driver Session QueryRunner SessionConfig Transaction TransactionWork]))
 
-(defrecord Connection [^Driver driver ^String database])
+(defprotocol Closeable
+  (close [this]))
+
+(defrecord IConnection [^Driver driver ^clojure.lang.IPersistentMap opts]
+  Closeable
+  (close [this] (.close ^Driver (:driver this))))
+
+(defrecord ISession [^Session session ^clojure.lang.IPersistentMap opts]
+  Closeable
+  (close [this] (.close ^Session (:session this))))
+
+(defrecord ITransaction [^Transaction transaction ^clojure.lang.IPersistentMap opts]
+  Closeable
+  (close [this] (.close ^Transaction (:transaction this))))
 
 (defn connect
   "Connect through bolt to the given neo4j server
@@ -13,59 +26,60 @@
   Supports the current options:
   :log :level [:all :error :warn :info :off] - defaults to :warn
   :encryption [:required :none] - defaults to :required
-  :database - defaults to nil"
-  (^Connection [^String url]
-   (Connection. (java-interop/connect url) nil))
-  (^Connection [^String url ^clojure.lang.IPersistentMap opts]
-   (Connection. (java-interop/connect url (java-interop/build-config opts)) (:database opts)))
-  (^Connection [^String url ^String usr ^String pwd]
-   (Connection. (java-interop/connect url usr pwd) nil))
-  (^Connection [^String url ^String usr ^String pwd ^clojure.lang.IPersistentMap opts]
-   (Connection. (java-interop/connect url usr pwd (java-interop/build-config opts)) (:database opts))))
+  :database - defaults to nil
+  :enforce-utc [true false] - default to false"
+  (^IConnection [^String url]
+   (connect  url {}))
+  (^IConnection [^String url ^clojure.lang.IPersistentMap opts]
+   (IConnection. (java-interop/connect url (java-interop/build-config opts)) opts))
+  (^IConnection [^String url ^String usr ^String pwd]
+   (connect url usr pwd {}))
+  (^IConnection [^String url ^String usr ^String pwd ^clojure.lang.IPersistentMap opts]
+   (IConnection. (java-interop/connect url usr pwd (java-interop/build-config opts)) opts)))
 
 (defn disconnect
   "Disconnect the given connection"
-  [^Connection conn]
+  [^IConnection conn]
   (.close ^Driver (:driver conn)))
 
 (defn create-session
   "Create a new session on the given Neo4J connection"
-  (^Session [^Connection {:keys [driver database] :as conn}]
-   (assert (instance? Driver driver) "Neo4J driver not provided - check DB connection.")
-   (if database
-     (.session ^Driver driver (SessionConfig/forDatabase database))
-     (.session ^Driver driver))))
+  ^ISession [^IConnection {:keys [driver opts]}]
+  (assert (instance? Driver driver) "Neo4J driver not provided - check DB connection.")
+  (if-let [database (:database opts)]
+    (ISession. (.session ^Driver driver (SessionConfig/forDatabase database)) opts)
+    (ISession. (.session ^Driver driver) opts)))
 
 (defmacro with-session
   "Creates a session with the given name on the given connection and executes the body
   within the session.
 
   The session can be used with the given name in the rest of the body."
-  [^Connection conn session & body]
+  [^IConnection conn session & body]
   `(with-open [~session (create-session ~conn)]
      ~@body))
 
 (defn begin-transaction
   "Start a new transaction on the given Neo4J session"
-  ^Transaction [^Session session]
-  (.beginTransaction session))
+  ^ITransaction [^ISession {:keys [session opts]}]
+  (ITransaction. (.beginTransaction session) opts))
 
 (defn commit!
   "Commits the given transaction"
-  [^Transaction trans]
-  (.commit trans))
+  [^ITransaction {:keys [transaction]}]
+  (.commit transaction))
 
 (defn rollback
   "Rolls the given transaction back"
-  [^Transaction trans]
-  (.rollback trans))
+  [^ITransaction {:keys [transaction]}]
+  (.rollback transaction))
 
 (defmacro with-transaction
   "Create a transaction with given name on the given connection execute the body
   within the transaction.
 
   The transaction can be used with the given name in the rest of the body."
-  [^Connection conn trans & body]
+  [^IConnection conn trans & body]
   `(with-open [~trans (begin-transaction (create-session ~conn))]
      (try
        ~@body
@@ -78,58 +92,64 @@
   "Execute the given query on the specified connection with optional parameters"
   (fn [conn & args] (class conn)))
 
-(defmethod execute! Connection
-  ([^Connection conn ^String query]
+(defmethod execute! IConnection
+  ([^IConnection conn ^String query]
    (execute! conn query {}))
-  ([^Connection conn ^String query ^clojure.lang.IPersistentMap params]
+  ([^IConnection conn ^String query ^clojure.lang.IPersistentMap params]
    (with-open [session (create-session conn)]
-     (java-interop/execute session query params))))
+     (java-interop/execute (:session session) query params (:opts session)))))
 
-(defmethod execute! QueryRunner
-  ([^QueryRunner runner ^String query]
-   (java-interop/execute runner query))
-  ([^QueryRunner runner ^String query ^clojure.lang.IPersistentMap params]
-   (java-interop/execute runner query params)))
+(defmethod execute! ISession
+  ([^ISession session ^String query]
+   (java-interop/execute (:session session) query))
+  ([^ISession session ^String query ^clojure.lang.IPersistentMap params]
+   (java-interop/execute (:session session) query params (:opts session))))
+
+(defmethod execute! ITransaction
+  ([^ITransaction transaction ^String query]
+   (java-interop/execute (:transaction transaction) query))
+  ([^ITransaction transaction ^String query ^clojure.lang.IPersistentMap params]
+   (java-interop/execute (:transaction transaction) query params (:opts transaction))))
 
 (defmacro with-read-only-conn
   "Create a managed read transaction with the name given as runner-alias and execute the
   body within the transaction.
 
   The runner-alias given for the transaction can be used within the body."
-  [^Connection conn runner-alias & body]
+  [^IConnection conn runner-alias & body]
   `(with-open [session# (create-session ~conn)]
      (.readTransaction
-      session#
+      (:session session#)
       (proxy [TransactionWork] []
         (execute [~runner-alias]
           ~@body)))))
 
 (defn execute-read
-  ([^Connection conn ^String query]
+  ([^IConnection conn ^String query]
    (execute-read conn query {}))
-  ([^Connection conn ^String query ^clojure.lang.IPersistentMap params]
+  ([^IConnection conn ^String query ^clojure.lang.IPersistentMap params]
    (with-read-only-conn conn tx
-     (java-interop/execute tx query params))))
+     (java-interop/execute tx query params (:opts conn)))))
 
 (defmacro with-write-conn
   "Create a managed write transaction with the name given as runner-alias and execute the
   body within the transaction.
 
   The runner-alias given for the transaction can be used within the body."
-  [^Connection conn runner-alias & body]
+  [^IConnection conn runner-alias & body]
   `(with-open [session# (create-session ~conn)]
      (.writeTransaction
-      session#
+      (:session session#)
       (proxy [TransactionWork] []
         (execute [~runner-alias]
           ~@body)))))
 
 (defn execute-write!
-  ([^Connection conn ^String query]
+  ([^IConnection conn ^String query]
    (execute-write! conn query {}))
-  ([^Connection conn ^String query ^clojure.lang.IPersistentMap params]
+  ([^IConnection conn ^String query ^clojure.lang.IPersistentMap params]
    (with-write-conn conn tx
-     (java-interop/execute tx query params))))
+     (java-interop/execute tx query params (:opts conn)))))
 
 (defn create-index!
   "Creates an index on the given combination and properties"

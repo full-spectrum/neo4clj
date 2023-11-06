@@ -93,17 +93,22 @@
   "Convert a given clojure primitive into its bolt parameter equivalent
   If given a vector or list, all elements within needs to be of the same type.
   This is a limitation in Neo4j not Neo4clj"
-  [value]
+  [value enforce-utc]
   (cond
     (keyword? value) (name value)
     (instance? java.time.Instant value) (java-time/zoned-date-time value "UTC")
+    (instance? java.time.ZonedDateTime value) (str "datetime(\""
+                                                             (if enforce-utc
+                                                               (t/format :iso-instant value)
+                                                               value)
+                                                             "\")")
     :else value))
 
 (defn clj-parameters->neo4j
   "Convert a Clojure parameter map to a Neo4j parameter array"
-  ^MapValue [^clojure.lang.IPersistentMap params]
+  ^MapValue [^clojure.lang.IPersistentMap params enforce-utc]
   (->> params
-       (walk/postwalk clj-parameter->neo4j)
+       (walk/postwalk #(clj-parameter->neo4j % enforce-utc))
        (mapcat identity)
        (into-array Object)
        Values/parameters))
